@@ -15,4 +15,4 @@
 
 * [210422_간단한 스택 자료구조 제작](https://github.com/jumax108/TIL/tree/main/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0/myStack)
 
-  
+* [210424_간단한 string 자료구조 제작](https://github.com/jumax108/TIL/tree/main/%EC%9E%90%EB%A3%8C%EA%B5%AC%EC%A1%B0/myString)
