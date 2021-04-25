@@ -2,40 +2,42 @@
 
 MyString::MyString() {
 	ptrStr = (char*)malloc(sizeof(char) * 1);
-	ptrStr[0] = '\0';
-	length = 1;
+	ptrStr[0] = 0;
+	length = 0;
 }
-MyString::MyString(
-	char const* src) {
+MyString::MyString(char const* src) {
+
 	int srcLength = strlen(src);
 	length = srcLength;
-	ptrStr = (char*)malloc(sizeof(char) * length + 1);
+	ptrStr = (char*)malloc(sizeof(char) * (length + 1));
 
 	for (int chrCnt = 0; chrCnt < length; chrCnt++) {
 		ptrStr[chrCnt] = src[chrCnt];
 	}
 	ptrStr[length] = '\0';
 }
-MyString::MyString(
-	char const* ptrSrc,
-	int length) {
+MyString::MyString(char const* ptrSrc, int length) {
 	this->length = length;
-	ptrStr = (char*)malloc(sizeof(char) * length+1);
+	ptrStr = (char*)malloc(sizeof(char) * (length + 1));
 
 	for (int chrCnt = 0; chrCnt < length; chrCnt++) {
 		ptrStr[chrCnt] = ptrSrc[chrCnt];
 	}
 	ptrStr[length] = '\0';
 }
-MyString::MyString(
-	MyString* ptrStr) {
+MyString::MyString(MyString* ptrStr) {
 	length = ptrStr->length;
-	this->ptrStr = (char*)malloc(sizeof(char) * length+1);
+	this->ptrStr = (char*)malloc(sizeof(char) * (length + 1));
 
 	for (int chrCnt = 0; chrCnt < length; chrCnt++) {
 		this->ptrStr[chrCnt] = *(*ptrStr)[chrCnt];
 	}
 	this->ptrStr[length] = '\0';
+}
+MyString::MyString(int length) {
+	ptrStr = (char*)malloc(sizeof(char) * (length + 1));
+	for (int chrCnt = 0; chrCnt <= length; chrCnt++)
+		ptrStr[chrCnt] = '\0';
 }
 
 int MyString::strlen(char const* str) {
@@ -152,83 +154,69 @@ unsigned char MyString::strcmp(MyString const* right) {
 	return strcmp(ptrStr, length, right->ptrStr, right->length);
 }
 
-bool MyString::strcat(char* dest, int destLength, char const* add, int addLength) {
-	MyString* strTemp = new MyString(dest, destLength);
+bool MyString::strcat(char* dest, char const* add, int addLength) {
 
-	if (dest != nullptr) {
-		free(dest);
+	int destLength = strlen(dest);
+
+	for (int chrCnt = 0; chrCnt < addLength; ++chrCnt) {
+		dest[chrCnt + destLength] = add[chrCnt];
 	}
 
-	dest = (char*)malloc(sizeof(char) * (destLength + addLength));
-	if (dest == nullptr) {
-		delete(strTemp);
-		return false;
-	}
-	strcpy(dest, destLength, strTemp);
-	strcpy(dest + destLength, addLength, add);
-
-	delete(strTemp);
 	return true;
 }
 bool MyString::strcat(char* dest, char const* add) {
-	int destLength = strlen(dest);
 	int addLength = strlen(add);
 
-	return strcat(dest, destLength, add, addLength);
+	return strcat(dest, add, addLength);
 }
 bool MyString::strcat(char* dest, MyString const* add) {
 	int destLength = strlen(dest);
-	return strcat(dest, destLength, add->ptrStr, add->length);
+	return strcat(dest, add->ptrStr, add->length);
 }
 bool MyString::strcat(MyString const* dest, char const* add) {
 	int addLength = strlen(add);
-	return strcat(dest->ptrStr, dest->length, add, addLength);
+	return strcat(dest->ptrStr, add, addLength);
 }
 bool MyString::strcat(MyString const* dest, MyString const* add) {
-	return strcat(dest->ptrStr, dest->length, add->ptrStr, add->length);
+	return strcat(dest->ptrStr, add->ptrStr, add->length);
 }
 bool MyString::strcat(char const* add) {
 	int addLength = strlen(add);
-	return strcat(ptrStr, length, add, addLength);
+	return strcat(ptrStr, add, addLength);
 }
 bool MyString::strcat(MyString const* add) {
-	return strcat(ptrStr, length, add->ptrStr, add->length);
+	return strcat(ptrStr, add->ptrStr, add->length);
 }
 
-MyString* MyString::strchr(char const* str, int const length, char const find) {
-	MyString* result = nullptr;
+char* MyString::strchr(char* str, int const length, char const find) {
 
 	for (int chrCnt = 0; chrCnt < length; ++chrCnt) {
 		if (str[chrCnt] == find) {
-			result = new MyString(&str[chrCnt], length - chrCnt);
-			break;
+			return &(str[chrCnt]);
 		}
 	}
 
-	return result;
+	return nullptr;
 }
-MyString* MyString::strchr(char const* str, char const find) {
+char* MyString::strchr(char* str, char const find) {
 	int strLength = strlen(str);
 	return strchr(str, strLength, find);
 }
-MyString* MyString::strchr(MyString const* str, char const find) {
+char* MyString::strchr(MyString* str, char const find) {
 	return strchr(str->ptrStr, str->length, find);
 }
-MyString* MyString::strchr(char const find) {
+char* MyString::strchr(char const find) {
 	return strchr(ptrStr, length, find);
 }
 
-MyString* MyString::strstr(char const* str, int const strLength, char const* find, int const findLength) {
-	MyString* result = nullptr;
-
+char* MyString::strstr(char* str, int const strLength, char const* find, int const findLength) {
 	int findCharIdx = 0;
 
 	for (int chrCnt = 0; chrCnt < strLength; ++chrCnt) {
 		if (str[chrCnt] == find[findCharIdx]) {
 			findCharIdx += 1;
 			if (findCharIdx == findLength) {
-				result = new MyString(&str[chrCnt - findLength + 1], strLength - (chrCnt - findLength+1));
-				break;
+				return &str[chrCnt - findLength + 1];
 			}
 		}
 		else {
@@ -237,54 +225,54 @@ MyString* MyString::strstr(char const* str, int const strLength, char const* fin
 		}
 	}
 
-	return result;
+	return nullptr;
 }
-MyString* MyString::strstr(char const* str, char const* find) {
+char* MyString::strstr(char* str, char const* find) {
 	int strLength = strlen(str);
 	int findLength = strlen(find);
 	return strstr(str, strLength, find, findLength);
 }
-MyString* MyString::strstr(char const* str, MyString const* find) {
+char* MyString::strstr(char* str, MyString const* find) {
 	int strLength = strlen(str);
 	return strstr(str, strLength, find->ptrStr, find->length);
 }
-MyString* MyString::strstr(MyString const* str, char const* find) {
+char* MyString::strstr(MyString* str, char const* find) {
 	int findLength = strlen(find);
 	return strstr(str->ptrStr, str->length, find, findLength);
 }
-MyString* MyString::strstr(MyString const* str, MyString const* find) {
+char* MyString::strstr(MyString* str, MyString const* find) {
 	return strstr(str->ptrStr, str->length, find->ptrStr, find->length);
 }
-MyString* MyString::strstr(char const* find) {
+char* MyString::strstr(char* find) {
 	int findLength = strlen(find);
 	return strstr(ptrStr, length, find, findLength);
 }
-MyString* MyString::strstr(MyString const* find) {
+char* MyString::strstr(MyString* find) {
 	return strstr(ptrStr, length, find->ptrStr, find->length);
 }
 
-MyString* MyString::strlwr(char const* str) {
-	MyString* result = new MyString(str);
-
-	for (int chrCnt = 0; chrCnt < result->length; ++chrCnt) {
-		if ('A' <= *(*result)[chrCnt] && *(*result)[chrCnt] <= 'Z') {
-			*(*result)[chrCnt] += 'a' - 'A';
+void MyString::strlwr(char* dest, char const* src, int srcLength) {
+	for (int chrCnt = 0; chrCnt < srcLength; ++chrCnt) {
+		if ('A' <= src[chrCnt] && src[chrCnt] <= 'Z') {
+			dest[chrCnt] += 'a' - 'A';
 		}
 
 	}
-
-	return result;
 }
-MyString* MyString::strlwr(MyString const* str) {
-	return strlwr(str->ptrStr);
+void MyString::strlwr(char* dest, char const* src) {
+	int srcLength = strlen(src);
+	strlwr(dest, src, srcLength);
 }
-MyString* MyString::strlwr() {
-	return strlwr(ptrStr);
+void MyString::strlwr(char* dest, MyString const* src) {
+	return strlwr(dest, src->ptrStr, src->length);
+}
+void MyString::strlwr() {
+	return strlwr(ptrStr, ptrStr, length);
 }
 
 char* MyString::operator[](int& const index) {
 	return &ptrStr[index];
 }
-char* MyString::operator[](int& const index) const{
+char* MyString::operator[](int& const index) const {
 	return &ptrStr[index];
 }

@@ -9,14 +9,15 @@ private:
 
 	static bool strcpy(char* dest, int destLenght, char const* src, int srcLength);
 	static unsigned char strcmp(char const* left, int leftLength, char const* right, int rightLength);
-	static bool strcat(char* dest, int destLength, char const* add, int addLength);
-	static MyString* strchr(char const* str, int const length , char const find);
-	static MyString* strstr(char const* str, int const strLength, char const* find, int const findLength);
+	static bool strcat(char* dest, char const* add, int addLength);
+	static char* strchr(char* str, int const length, char const find);
+	static char* strstr(char* str, int const strLength, char const* find, int const findLength);
+	static void strlwr(char* dest, char const* src, int srcLength);
 public:
 
 	// set "\0", not null ptr
 	MyString();
-	
+
 	// check null character
 	MyString(
 		char const* src
@@ -29,6 +30,10 @@ public:
 
 	MyString(
 		MyString* ptrString
+	);
+
+	MyString(
+		int length // reserve
 	);
 
 	static int strlen(char const*); // str end is null character, same std strlen
@@ -62,20 +67,20 @@ public:
 	bool strcat(char const* add);
 	bool strcat(MyString const* add);
 
-	static MyString* strchr(char const* str, char const find);
-	static MyString* strchr(MyString const* str, char const find);
-	MyString* strchr(char const find);
+	static char* strchr(char* str, char const find);
+	static char* strchr(MyString* str, char const find);
+	char* strchr(char const find);
 
-	static MyString* strstr(char const* str, char const* find);
-	static MyString* strstr(char const* str, MyString const* find);
-	static MyString* strstr(MyString const* str, char const* find);
-	static MyString* strstr(MyString const* str, MyString const* find);
-	MyString* strstr(char const* find);
-	MyString* strstr(MyString const* find);
+	static char* strstr(char* str, char const* find);
+	static char* strstr(char* str, MyString const* find);
+	static char* strstr(MyString* str, char const* find);
+	static char* strstr(MyString* str, MyString const* find);
+	char* strstr(char* find);
+	char* strstr(MyString* find);
 
-	static MyString* strlwr(char const* str);
-	static MyString* strlwr(MyString const* str);
-	MyString* strlwr();
+	static void strlwr(char* dest, char const* str);
+	static void strlwr(char* dest, MyString const* str);
+	void strlwr();
 
 	char* operator[](int& const index);
 	char* operator[](int& const index) const;
