@@ -1,0 +1,6 @@
+*.tlog
+*.lib.recipe
+*.log
+*.obj
+*.pdb
+*.vcxproj.FileListAbsolute.txt
