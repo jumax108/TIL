@@ -46,9 +46,9 @@ ___ ___
 
 컴파일러는 case 값이 일정하면 점프 테이블을 준비한다.
 
-![switch_메모리뷰.png](../../images/switch_메모리뷰.png)
+![switch_메모리뷰.png](https://github.com/jumax108/images/blob/master/switch_%EB%A9%94%EB%AA%A8%EB%A6%AC%EB%B7%B0.PNG)
 
-위 코드의 마지막 61104C 메모리 값이다.
+위 코드의 마지막에 있는 61104C 주소의 메모리 값이다.
 
 그리고 저장된 값들은 각 case 가 시작되는 코드의 주소이다.
 
