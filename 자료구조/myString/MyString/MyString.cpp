@@ -1,42 +1,42 @@
 #include "MyString.h"
 
-MyString::MyString() {
-	ptrStr = (char*)malloc(sizeof(char) * 1);
-	ptrStr[0] = 0;
-	length = 0;
-}
+MyString::MyString(): MyString(1) {}
 MyString::MyString(char const* src) {
-
-	int srcLength = strlen(src);
-	length = srcLength;
-	ptrStr = (char*)malloc(sizeof(char) * (length + 1));
-
+	length = strlen(src);
+	ptrStr = (char*)malloc(length);
+	if (ptrStr == nullptr) {
+		throw std::runtime_error("MyString::MyString: Fail malloc");
+	}
 	for (int chrCnt = 0; chrCnt < length; chrCnt++) {
 		ptrStr[chrCnt] = src[chrCnt];
 	}
-	ptrStr[length] = '\0';
 }
 MyString::MyString(char const* ptrSrc, int length) {
 	this->length = length;
-	ptrStr = (char*)malloc(sizeof(char) * (length + 1));
-
+	ptrStr = (char*)malloc(length);
+	if (ptrStr == nullptr) {
+		throw std::runtime_error("MyString::MyString: Fail malloc");
+	}
 	for (int chrCnt = 0; chrCnt < length; chrCnt++) {
 		ptrStr[chrCnt] = ptrSrc[chrCnt];
 	}
-	ptrStr[length] = '\0';
 }
 MyString::MyString(MyString* ptrStr) {
 	length = ptrStr->length;
-	this->ptrStr = (char*)malloc(sizeof(char) * (length + 1));
-
+	if (ptrStr == nullptr) {
+		throw std::runtime_error("MyString::MyString: Fail malloc");
+	}
 	for (int chrCnt = 0; chrCnt < length; chrCnt++) {
 		this->ptrStr[chrCnt] = *(*ptrStr)[chrCnt];
 	}
-	this->ptrStr[length] = '\0';
 }
 MyString::MyString(int length) {
-	ptrStr = (char*)malloc(sizeof(char) * (length + 1));
-	for (int chrCnt = 0; chrCnt <= length; chrCnt++)
+	this->length = length;
+	ptrStr = (char*)malloc(length);
+	if (ptrStr == nullptr) {
+		throw std::runtime_error("MyString::MyString: Fail malloc");
+	}
+	for (int chrCnt = 0; chrCnt < length; chrCnt++)
 		ptrStr[chrCnt] = '\0';
 }
 
@@ -58,12 +58,9 @@ bool MyString::strcpy(char* dest, int destLength, char const* src, int srcLength
 	if (destLength < srcLength) {
 		return false;
 	}
-
 	for (int srcChrCnt = 0; srcChrCnt < srcLength; ++srcChrCnt) {
 		dest[srcChrCnt] = src[srcChrCnt];
 	}
-	dest[srcLength] = '\0';
-
 	return true;
 }
 bool MyString::strcpy(char* dest, int destLength, char const* src) {
@@ -90,7 +87,10 @@ bool MyString::strcpy(char const* src) {
 
 const MyString* MyString::operator=(MyString const* src) {
 	free(ptrStr);
-	ptrStr = (char*)malloc(sizeof(char) * src->length);
+	ptrStr = (char*)malloc(src->length);
+	if (ptrStr == nullptr) {
+		throw std::runtime_error("MyString::operator=: Fail Malloc");
+	}
 	length = src->length;
 	for (int srcChrCnt = 0; srcChrCnt < src->length; srcChrCnt++) {
 		ptrStr[srcChrCnt] = *(*src)[srcChrCnt];
@@ -101,7 +101,10 @@ const MyString* MyString::operator=(MyString const* src) {
 const MyString* MyString::operator=(char const* src) {
 	free(ptrStr);
 	int srcLength = strlen(src);
-	ptrStr = (char*)malloc(sizeof(char) * srcLength);
+	ptrStr = (char*)malloc(srcLength);
+	if (ptrStr == nullptr) {
+		throw std::runtime_error("MyString::operator=: Fail Malloc");
+	}
 	for (int srcChrCnt = 0; srcChrCnt < srcLength; srcChrCnt++) {
 		ptrStr[srcChrCnt] = src[srcChrCnt];
 	}
@@ -154,38 +157,34 @@ unsigned char MyString::strcmp(MyString const* right) {
 	return strcmp(ptrStr, length, right->ptrStr, right->length);
 }
 
-bool MyString::strcat(char* dest, char const* add, int addLength) {
-
-	int destLength = strlen(dest);
-
+bool MyString::strcat(char* dest, int destLength, char const* add, int addLength) {
 	for (int chrCnt = 0; chrCnt < addLength; ++chrCnt) {
 		dest[chrCnt + destLength] = add[chrCnt];
 	}
-
 	return true;
 }
 bool MyString::strcat(char* dest, char const* add) {
+	int destLength = strlen(dest);
 	int addLength = strlen(add);
-
-	return strcat(dest, add, addLength);
+	return strcat(dest, destLength, add, addLength);
 }
 bool MyString::strcat(char* dest, MyString const* add) {
 	int destLength = strlen(dest);
-	return strcat(dest, add->ptrStr, add->length);
+	return strcat(dest, destLength, add->ptrStr, add->length);
 }
 bool MyString::strcat(MyString const* dest, char const* add) {
 	int addLength = strlen(add);
-	return strcat(dest->ptrStr, add, addLength);
+	return strcat(dest->ptrStr, dest->length, add, addLength);
 }
 bool MyString::strcat(MyString const* dest, MyString const* add) {
-	return strcat(dest->ptrStr, add->ptrStr, add->length);
+	return strcat(dest->ptrStr, dest->length, add->ptrStr, add->length);
 }
 bool MyString::strcat(char const* add) {
 	int addLength = strlen(add);
-	return strcat(ptrStr, add, addLength);
+	return strcat(ptrStr, length, add, addLength);
 }
 bool MyString::strcat(MyString const* add) {
-	return strcat(ptrStr, add->ptrStr, add->length);
+	return strcat(ptrStr, length, add->ptrStr, add->length);
 }
 
 char* MyString::strchr(char* str, int const length, char const find) {

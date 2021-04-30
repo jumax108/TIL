@@ -1,6 +1,7 @@
 #pragma once
 
 #include <malloc.h>
+#include <stdexcept>
 
 class MyString {
 private:
@@ -9,7 +10,7 @@ private:
 
 	static bool strcpy(char* dest, int destLenght, char const* src, int srcLength);
 	static unsigned char strcmp(char const* left, int leftLength, char const* right, int rightLength);
-	static bool strcat(char* dest, char const* add, int addLength);
+	static bool strcat(char* dest, int destLength, char const* add, int addLength);
 	static char* strchr(char* str, int const length, char const find);
 	static char* strstr(char* str, int const strLength, char const* find, int const findLength);
 	static void strlwr(char* dest, char const* src, int srcLength);
