@@ -3,8 +3,11 @@
 
 using namespace my;
 
-stack::stack() : stack(1) {}
-stack::stack(unsigned int capacity) {
+template<typename T>
+stack<T>::stack() : stack(1) {}
+
+template<typename T>
+stack<T>::stack(unsigned int capacity) {
 	if (capacity == 0) {
 		capacity = 1;
 	}
@@ -14,22 +17,25 @@ stack::stack(unsigned int capacity) {
 	value = (int*)malloc(sizeof(int) * capacity);
 }
 
-stack::~stack() {
+template<typename T>
+stack<T>::~stack() {
 	free(value);
 }
 
-bool stack::push(int in) {
+template<typename T>
+bool stack<T>::push(const T* in) {
 	if (topIndex == capacity) {
 		return false;
 	}
 
-	value[topIndex] = in;
+	value[topIndex] = *in;
 	topIndex += 1;
 
 	return true;
 }
 
-bool stack::pop(int* const out) {
+template<typename T>
+bool stack<T>::pop(T* const out) {
 	if (topIndex == 0) {
 		return false;
 	}
@@ -40,16 +46,18 @@ bool stack::pop(int* const out) {
 	return true;
 }
 
-void stack::getSize(unsigned int* const out) {
+template<typename T>
+void stack<T>::getSize(unsigned int* const out) {
 	*out = topIndex;
 }
 
-void stack::getCapacity(unsigned int* const out) {
+template<typename T>
+void stack<T>::getCapacity(unsigned int* const out) {
 	*out = capacity;
 }
 
-
-variableLengthStack::variableLengthStack(unsigned int capacity) {
+template<typename T>
+variableLengthStack<T>::variableLengthStack(unsigned int capacity) {
 	if (capacity == 0) {
 		capacity = 1;
 	}
@@ -58,12 +66,15 @@ variableLengthStack::variableLengthStack(unsigned int capacity) {
 	this->capacity = capacity;
 	value = (int*)malloc(sizeof(int) * capacity);
 }
-variableLengthStack::~variableLengthStack() {
+
+template<typename T>
+variableLengthStack<T>::~variableLengthStack() {
 	free(value);
 }
 
-bool variableLengthStack::resize(unsigned int capacity) {
-
+template<typename T>
+bool variableLengthStack<T>::resize(unsigned int capacity) {
+	
 	if (capacity == 0) {
 		return false;
 	}
@@ -91,12 +102,13 @@ bool variableLengthStack::resize(unsigned int capacity) {
 	return true;
 }
 
-bool variableLengthStack::push(int in) {
+template<typename T>
+bool variableLengthStack<T>::push(const T* in) {
 	if (topIndex == capacity) {
 		resize(capacity * 2);
 	}
 
-	value[topIndex] = in;
+	value[topIndex] = *in;
 	topIndex += 1;
 
 	return true;

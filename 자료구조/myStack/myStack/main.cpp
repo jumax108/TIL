@@ -11,8 +11,8 @@ int main() {
 	const int testSize = 10000000;
 
 	std::stack<int> stdStack;
-	my::stack myStack(testSize);
-	my::variableLengthStack myVLStack(0);
+	my::stack<int> myStack(testSize);
+	my::variableLengthStack<int> myVLStack(0);
 
 	time_t start;
 	time_t end;
@@ -27,7 +27,7 @@ int main() {
 
 	start = clock();
 	for (int i = 0; i < testSize; i++) {
-		myStack.push(i);
+		myStack.push(&i);
 	}
 	end = clock();
 
@@ -36,7 +36,7 @@ int main() {
 
 	start = clock();
 	for (int i = 0; i < testSize; i++) {
-		myVLStack.push(i);
+		myVLStack.push(&i);
 	}
 	end = clock();
 

@@ -1,20 +1,21 @@
 #pragma once
 
 namespace my {
+	template<typename T>
 	class stack {
 
 	protected:
 		unsigned int capacity;
-		int* value;
+		T* value;
 		alignas(64) unsigned int topIndex;
 
 	public:
 		bool push(
-			int in // push data
+			const T* in // push data
 		);
 
 		bool pop(
-			int* const out // for return
+			T* const out // for return
 		);
 
 		// get used stack size
@@ -35,6 +36,7 @@ namespace my {
 		~stack();
 	};
 
+	template<typename T>
 	class variableLengthStack: public stack {
 	public:
 
@@ -44,7 +46,7 @@ namespace my {
 
 		// if stack is full, change capacity auto
 		bool push(
-			int in // push data
+			const T* in // push data
 		);
 
 		variableLengthStack(
