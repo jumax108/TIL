@@ -1,13 +1,13 @@
+#pragma once
+
 #include "myStack.h"
 #include <malloc.h>
 
-using namespace my;
+template<typename T>
+my::stack<T>::stack() : stack(1) {}
 
 template<typename T>
-stack<T>::stack() : stack(1) {}
-
-template<typename T>
-stack<T>::stack(unsigned int capacity) {
+my::stack<T>::stack(unsigned int capacity) {
 	if (capacity == 0) {
 		capacity = 1;
 	}
@@ -18,12 +18,12 @@ stack<T>::stack(unsigned int capacity) {
 }
 
 template<typename T>
-stack<T>::~stack() {
+my::stack<T>::~stack() {
 	free(value);
 }
 
 template<typename T>
-bool stack<T>::push(const T* in) {
+bool my::stack<T>::push(const T* in) {
 	if (topIndex == capacity) {
 		return false;
 	}
@@ -35,7 +35,7 @@ bool stack<T>::push(const T* in) {
 }
 
 template<typename T>
-bool stack<T>::pop(T* const out) {
+bool my::stack<T>::pop(T* const out) {
 	if (topIndex == 0) {
 		return false;
 	}
@@ -47,33 +47,33 @@ bool stack<T>::pop(T* const out) {
 }
 
 template<typename T>
-void stack<T>::getSize(unsigned int* const out) {
+void my::stack<T>::getSize(unsigned int* const out) {
 	*out = topIndex;
 }
 
 template<typename T>
-void stack<T>::getCapacity(unsigned int* const out) {
+void my::stack<T>::getCapacity(unsigned int* const out) {
 	*out = capacity;
 }
 
 template<typename T>
-variableLengthStack<T>::variableLengthStack(unsigned int capacity) {
+my::variableLengthStack<T>::variableLengthStack(unsigned int capacity) {
 	if (capacity == 0) {
 		capacity = 1;
 	}
 
-	topIndex = 0;
+	this->topIndex = 0;
 	this->capacity = capacity;
-	value = (int*)malloc(sizeof(int) * capacity);
+	this->value = (int*)malloc(sizeof(int) * capacity);
 }
 
 template<typename T>
-variableLengthStack<T>::~variableLengthStack() {
-	free(value);
+my::variableLengthStack<T>::~variableLengthStack() {
+	free(this->value);
 }
 
 template<typename T>
-bool variableLengthStack<T>::resize(unsigned int capacity) {
+bool my::variableLengthStack<T>::resize(unsigned int capacity) {
 	
 	if (capacity == 0) {
 		return false;
@@ -82,18 +82,18 @@ bool variableLengthStack<T>::resize(unsigned int capacity) {
 
 	int* resizingTemp = nullptr;
 
-	if (value != nullptr) {
-		resizingTemp = value;
+	if (this->value != nullptr) {
+		resizingTemp = this->value;
 	}
 
-	value = (int*)malloc(sizeof(int)*capacity);
-	if (value == nullptr) {
+	this->value = (int*)malloc(sizeof(int)*capacity);
+	if (this->value == nullptr) {
 		return false;
 	}
 
 	if (resizingTemp != nullptr) {
-		for (int valueCnt = 0; valueCnt < topIndex; ++valueCnt) {
-			value[valueCnt] = resizingTemp[valueCnt];
+		for (int valueCnt = 0; valueCnt < this->topIndex; ++valueCnt) {
+			this->value[valueCnt] = resizingTemp[valueCnt];
 		}
 	}
 
@@ -103,13 +103,13 @@ bool variableLengthStack<T>::resize(unsigned int capacity) {
 }
 
 template<typename T>
-bool variableLengthStack<T>::push(const T* in) {
-	if (topIndex == capacity) {
-		resize(capacity * 2);
+bool my::variableLengthStack<T>::push(const T* in) {
+	if (this->topIndex == this->capacity) {
+		resize(this->capacity * 2);
 	}
 
-	value[topIndex] = *in;
-	topIndex += 1;
+	this->value[this->topIndex] = *in;
+	this->topIndex += 1;
 
 	return true;
 }

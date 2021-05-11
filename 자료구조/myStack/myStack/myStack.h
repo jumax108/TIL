@@ -37,7 +37,7 @@ namespace my {
 	};
 
 	template<typename T>
-	class variableLengthStack: public stack {
+	class variableLengthStack: public stack<T> {
 	public:
 
 		bool resize(
@@ -56,3 +56,5 @@ namespace my {
 		~variableLengthStack();
 	};
 }
+
+#include "myStack.cpp"
