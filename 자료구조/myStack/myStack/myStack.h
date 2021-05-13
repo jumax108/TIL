@@ -1,59 +1,39 @@
 #pragma once
 
+#include <malloc.h>
+#include <stdexcept>
+
 namespace my {
 	template<typename T>
 	class stack {
 
-	protected:
-		unsigned int capacity;
-		T* value;
-		alignas(64) unsigned int topIndex;
 
 	public:
 		bool push(
-			const T* in // push data
+			const T in // 데이터 입력
 		);
 
-		bool pop(
-			T* const out // for return
-		);
+		void pop();
 
-		// get used stack size
-		void getSize(
-			unsigned int* const out // for return
-		);
+		int front() const;
 
-		// get maximum stack size
-		void getCapacity(
-			unsigned int* const out // for return
-		);
+		unsigned int getSize() const; // 현재 사용량을 얻습니다.
+
+		unsigned int getCapacity() const; // 현재 할당량을 얻습니다.
 
 		stack();
 		stack(
-			unsigned int capacity // minimum capacity is 1
+			unsigned int capacity = 1 // 최소 할당량 1
 		);
 
 		~stack();
-	};
+	private:
+		unsigned int capacity;
+		T* value;
+		unsigned int topIndex;
 
-	template<typename T>
-	class variableLengthStack: public stack<T> {
-	public:
-
-		bool resize(
-			unsigned int capacity // change stack size
-		);
-
-		// if stack is full, change capacity auto
-		bool push(
-			const T* in // push data
-		);
-
-		variableLengthStack(
-			unsigned int capacity
-		);
-
-		~variableLengthStack();
+	private:
+		void resize();
 	};
 }
 
@@ -62,108 +42,48 @@ my::stack<T>::stack() : stack(1) {}
 
 template<typename T>
 my::stack<T>::stack(unsigned int capacity) {
-	if (capacity == 0) {
-		capacity = 1;
-	}
-
 	topIndex = 0;
 	this->capacity = capacity;
-	value = (int*)malloc(sizeof(int) * capacity);
+	value = new int[capacity];
 }
 
 template<typename T>
 my::stack<T>::~stack() {
-	free(value);
+	delete[] value;
 }
 
 template<typename T>
-bool my::stack<T>::push(const T* in) {
+bool my::stack<T>::push(const T in) {
 	if (topIndex == capacity) {
 		return false;
 	}
 
-	value[topIndex] = *in;
+	value[topIndex] = in;
 	topIndex += 1;
 
 	return true;
 }
 
 template<typename T>
-bool my::stack<T>::pop(T* const out) {
+void my::stack<T>::pop() {
 	if (topIndex == 0) {
-		return false;
+		throw std::out_of_range("Stack::pop, stack에 아무 것도 없습니다.");
 	}
 
 	topIndex -= 1;
-	*out = value[topIndex];
-
-	return true;
 }
 
 template<typename T>
-void my::stack<T>::getSize(unsigned int* const out) {
-	*out = topIndex;
+int my::stack<T>::front() const {
+	return value[topIndex - 1];
 }
 
 template<typename T>
-void my::stack<T>::getCapacity(unsigned int* const out) {
-	*out = capacity;
+unsigned int my::stack<T>::getSize() const {
+	return topIndex;
 }
 
 template<typename T>
-my::variableLengthStack<T>::variableLengthStack(unsigned int capacity) {
-	if (capacity == 0) {
-		capacity = 1;
-	}
-
-	this->topIndex = 0;
-	this->capacity = capacity;
-	this->value = (int*)malloc(sizeof(int) * capacity);
-}
-
-template<typename T>
-my::variableLengthStack<T>::~variableLengthStack() {
-	free(this->value);
-}
-
-template<typename T>
-bool my::variableLengthStack<T>::resize(unsigned int capacity) {
-
-	if (capacity == 0) {
-		return false;
-	}
-	this->capacity = capacity;
-
-	int* resizingTemp = nullptr;
-
-	if (this->value != nullptr) {
-		resizingTemp = this->value;
-	}
-
-	this->value = (int*)malloc(sizeof(int) * capacity);
-	if (this->value == nullptr) {
-		return false;
-	}
-
-	if (resizingTemp != nullptr) {
-		for (int valueCnt = 0; valueCnt < this->topIndex; ++valueCnt) {
-			this->value[valueCnt] = resizingTemp[valueCnt];
-		}
-	}
-
-	free(resizingTemp);
-
-	return true;
-}
-
-template<typename T>
-bool my::variableLengthStack<T>::push(const T* in) {
-	if (this->topIndex == this->capacity) {
-		resize(this->capacity * 2);
-	}
-
-	this->value[this->topIndex] = *in;
-	this->topIndex += 1;
-
-	return true;
+unsigned int my::stack<T>::getCapacity() const {
+	return capacity;
 }

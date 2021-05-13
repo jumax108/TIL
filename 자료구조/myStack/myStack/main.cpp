@@ -11,8 +11,8 @@ int main() {
 	const int testSize = 10000000;
 
 	std::stack<int> stdStack;
-	my::stack<int> myStack(testSize);
-	my::variableLengthStack<int> myVLStack(0);
+	my::_stack<int> myStack(testSize);
+	my::_variableLengthStack<int> myVLStack(0);
 
 	time_t start;
 	time_t end;
