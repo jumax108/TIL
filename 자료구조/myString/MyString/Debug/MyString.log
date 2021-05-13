@@ -1,4 +1,0 @@
-﻿  main.cpp
-C:\Users\jhmax\Desktop\MyString\MyString.h(80,35): warning C4227: 오래된 구문을 사용했습니다. 참조의 한정자가 무시됩니다.
-C:\Users\jhmax\Desktop\MyString\MyString.h(81,35): warning C4227: 오래된 구문을 사용했습니다. 참조의 한정자가 무시됩니다.
-  MyString.vcxproj -> C:\Users\jhmax\Desktop\MyString\Debug\MyString.exe
