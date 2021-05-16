@@ -44,7 +44,7 @@ template<typename T>
 my::stack<T>::stack(unsigned int capacity) {
 	topIndex = 0;
 	this->capacity = capacity;
-	value = new int[capacity];
+	value = new T[capacity];
 }
 
 template<typename T>
