@@ -1,143 +1,195 @@
 #pragma once
 
-#include "myStack.h"
 
-namespace my {
+template<typename T>
+class linkedList {
+public:
 
-	template<typename T>
 	struct _node {
-		T* value;
-		_node<T>* parent;
-		_node<T>* child;
-		int index = -1;
+		T value;
+		_node* parent;
+		_node* child;
+
+		inline _node* operator=(const _node* const node) {
+			value = node->value;
+			parent = node->parent;
+			child = node->child;
+
+			return this;
+		}
+
+		inline bool operator==(const _node& const node) {
+			return value == node.value && parent == node.parent && child == node.child;
+		}
+
 	};
-	
-	template<typename T>
-	class linkedList {
+
+	class iterator {
 	public:
-		linkedList(
-			int capacity = 10 // capacity 만큼 arr의 크기 확보합니다.
-		);
-
-		void insert(
-			T* value, // 값을 저장할 데이터
-			_node<T>* parent = nullptr // 이 노드의 자식으로 저장됩니다. null 이라면 해당 value는 첫번째 노드가 됩니다.
-		);
-
-		void erase(
-			_node<T>* node // 지울 노드를 전달합니다.
-		);
-
-		_node<T>* getFirstNode() {
-			return arr[firstIdx];
+		iterator() {
+			node = nullptr;
 		}
 
+		iterator(const _node* const node) {
+			this->node = (_node*)node;
+		}
 
-		~linkedList();
+		inline iterator* operator=(const _node* const node) {
+			this->node = (_node*)node;
+
+			return this;
+		}
+
+		inline T& operator*() {
+			return node->value;
+		}
+
+		inline iterator* operator++() {
+			node = node->child;
+			return this;
+		}
+
+		inline iterator* operator--() {
+			node = node->parent;
+			return this;
+		}
+
+		inline bool operator!=(const _node* const node) {
+			return !(*(this->node) == *node);
+		}
+
+		inline bool operator==(const _node* const node) {
+			return *(this->node) == *node;
+		}
 
 	private:
-
-		// capacity 만큼 arr 크기를 변경합니다.
-		void resize(int capacity);
-
-
-	private:
-		_node<T>** arr = nullptr; // 각 노드 주소값이 담길 배열
-		int capacity = 0;		  // capacity 만큼 arr 크기 확보합니다.
-		int firstIdx = -1;		  // root node의 인덱스
-
-		// arr에서 현재 사용하지 않는 인덱스를 저장합니다.
-		// 인덱스가 필요할 때 pop 해서 사용합니다.
-		stack<int> notUsedIdx;
+		_node *node;
+		friend class linkedList;
 	};
-}
 
-template<typename T>
-my::linkedList<T>::linkedList(int capacity) : notUsedIdx(capacity) {
-	resize(capacity);
-	this->capacity = capacity;
-}
+	linkedList();
 
-template<typename T>
-my::linkedList<T>::~linkedList() {
-	// value에 대한 할당 해제를 보장하지 않음.
-	for (int arrCnt = 0; arrCnt < capacity; ++arrCnt) {
-		delete arr[arrCnt];
-	}
-	delete[] arr;
-}
+	void push_front(
+		const T const value // 저장할 값
+	);
+	void push_back(
+		const T const value // 저장할 값
+	);
 
-template<typename T>
-void my::linkedList<T>::resize(int capacity) {
-	void* beforeArr = arr;
+	void insert(
+		const T const value, // 값을 저장할 데이터
+		_node* parent  // 이 노드의 자식으로 저장됩니다.
+	);
 
-	arr = new _node<T>*[capacity];
-	for (int arrCnt = 0; arrCnt < capacity; arrCnt++) {
-		arr[arrCnt] = new _node<T>;
-	}
+	iterator erase(
+		iterator iter // 지울 노드를 전달합니다.
+	) {
 
-	// 추가된 노드 인덱스 스택에 추가
-	for (int idxCnt = this->capacity; idxCnt < capacity; ++idxCnt) {
-		notUsedIdx.push(idxCnt);
-	}
+		linkedList<T>::_node* node = iter.node;
+		linkedList<T>::_node* child = node->child;
 
-	// 최초 생성 시에만 return 합니다.
-	if (beforeArr == nullptr) {
-		return;
-	}
-
-	// 이전 노드를 다시 복사
-	for (int arrCnt = 0; arrCnt < this->capacity; arrCnt++) {
-		delete arr[arrCnt];
-		arr[arrCnt] = ((_node<T>**)beforeArr)[arrCnt];
-	}
-
-
-}
-
-template<typename T>
-void my::linkedList<T>::insert(T* value, _node<T>* parent) {
-
-	unsigned int stackSize = notUsedIdx.getSize();
-	// arr 공간이 부족한 경우
-	if (stackSize == 0) {
-		resize(capacity * 2);
-		capacity *= 2;
-	}
-
-	int idx = notUsedIdx.front();
-	notUsedIdx.pop();
-
-	arr[idx]->value = value;
-	arr[idx]->parent = parent;
-	arr[idx]->index = idx;
-
-	if (parent == nullptr) {
-		arr[idx]->child = nullptr;
-		if (firstIdx != -1) {
-			arr[idx]->child = arr[firstIdx];
-			arr[firstIdx]->parent = arr[idx];
-		}
-		firstIdx = idx;
-	}
-	else {
-		parent->child->parent = arr[idx];
-		arr[idx]->child = parent->child;
-		parent->child = arr[idx];
-	}
-}
-
-template<typename T>
-void my::linkedList<T>::erase(_node<T>* node) {
-	notUsedIdx.push(node->index);
-
-	if(node->child != nullptr)
 		node->child->parent = node->parent;
-	if(node->parent != nullptr)
 		node->parent->child = node->child;
-		
-	// 소멸자에서 중복 제거하지 않도록
-	arr[node->index] = nullptr;
 
-	delete node;
+		free(node);
+
+		return *(++iter);
+	}
+
+	void clear();
+
+	inline _node* begin() {
+		return head.child;
+	}
+
+	inline _node* end() {
+		return &tail;
+	}
+
+	~linkedList();
+
+
+
+private:
+	_node head;
+	_node tail;
+
+};
+
+
+/*
+template<typename T>
+linkedList<T>::iterator linkedList<T>::erase(linkedList<T>::iterator iter) {
+
+	linkedList<T>::_node* node = iter.node;
+	linkedList<T>::_node* child = node->child;
+
+	node->child->parent = node->parent;
+	node->parent->child = node->child;
+
+	free(node);
+
+	return *(++iter);
+}*/
+
+
+template<typename T>
+linkedList<T>::linkedList(){
+	
+	head.parent = nullptr;
+	head.child = &tail;
+
+	tail.parent = &head;
+	tail.child = nullptr;
+}
+
+template<typename T>
+linkedList<T>::~linkedList() {
+	clear();
+}
+
+template<typename T>
+void linkedList<T>::insert(T value, linkedList<T>::_node* parent) {
+
+	_node* node = (linkedList<T>::_node*)malloc(sizeof(linkedList<T>::_node));
+
+	node->value = value;
+	node->parent = parent;
+
+	parent->child->parent = node;
+	node->child = parent->child;
+	parent->child = node;
+	
+}
+
+template<typename T>
+void linkedList<T>::push_front(const T const value) {
+	_node* node = (linkedList<T>::_node*)malloc(sizeof(linkedList<T>::_node));
+
+	node->value = value;
+
+	node->parent = &head;
+	node->child = head.child;
+
+	head->child->parent = node;
+	head->child = node;
+}
+
+template<typename T>
+void linkedList<T>::push_back(const T const value) {
+	_node* node = (linkedList<T>::_node*)malloc(sizeof(linkedList<T>::_node));
+
+	node->value = value;
+	node->parent = tail.parent;
+	node->child = &tail;
+
+	tail.parent->child = node;
+	tail.parent = node;
+}
+
+template<typename T>
+void linkedList<T>::clear() {
+	for (linkedList<T>::iterator iter = begin(); iter != end(); ) {
+		iter = erase(iter);
+	}
 }

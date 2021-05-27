@@ -1,22 +1,45 @@
 ﻿#include <stdio.h>
+#include <malloc.h>
 #include "myLinkedList.h"
 
 int main() {
 
-	my::linkedList<int> list(1);
+	/*std::list<int> list;
 
-	list.insert(new int(1));
-	list.insert(new int(2));
-	list.insert(new int(3));
+	for (int i = 0; i < 10; i++) {
+		list.push_back(i + 1);
+	}
 
-	delete list.getFirstNode()->child->value;
-	list.erase(list.getFirstNode()->child);
+	for (std::list<int>::iterator iter = list.begin(); iter != list.end(); ++iter) {
 
-	delete list.getFirstNode()->child->value;
-	list.erase(list.getFirstNode()->child);
+		printf("%d\n", *iter);
+	}*/
+		
+	
+	linkedList<int> list;
 
-	delete list.getFirstNode()->value;
-	list.erase(list.getFirstNode());
+	list.push_back(1);
+	list.push_back(2);
+	list.push_back(3);
+	list.push_back(4);
+	list.push_back(5);
+	list.push_back(6);
+	list.push_back(7);
+	list.push_back(8);
+	list.push_back(9);
+	list.push_back(10);
+
+	for (linkedList<int>::iterator iter = list.begin(); iter != list.end(); ++iter) {
+		printf("%d\n", *iter);
+	}
+
+	list.clear();
+	list.push_back(5);
+	list.push_back(6);
+	for (linkedList<int>::iterator iter = list.begin(); iter != list.end(); ++iter) {
+		printf("%d\n", *iter);
+	}
+
 
 	return 0;
 }
