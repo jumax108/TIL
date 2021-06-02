@@ -9,6 +9,7 @@ je endProc
 add rax, 1
 jmp checkNull
 endProc:
+add rax, 1
 ret
 _strlen ENDP
 
