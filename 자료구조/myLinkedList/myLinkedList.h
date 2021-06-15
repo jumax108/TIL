@@ -49,6 +49,8 @@ public:
 			return this;
 		}
 
+
+
 		inline iterator* operator--() {
 			node = node->parent;
 			return this;
