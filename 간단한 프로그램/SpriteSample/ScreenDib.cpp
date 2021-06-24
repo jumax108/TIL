@@ -9,7 +9,7 @@ CScreenDib::CScreenDib(int width, int height, int colorBit) {
 	BITMAPINFOHEADER* infoHeader = &_bmpInfo.bmiHeader;
 	infoHeader->biSize = sizeof(BITMAPINFOHEADER);
 	infoHeader->biWidth = width;
-	infoHeader->biHeight = height;
+	infoHeader->biHeight = -height;
 	infoHeader->biPlanes = 1;
 	infoHeader->biBitCount = colorBit;
 

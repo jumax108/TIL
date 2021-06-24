@@ -6,6 +6,9 @@
 #include "ScreenDib.h"
 #include "Sprite.h"
 
+#define MIN(a,b) a>b?b:a
+#define MAX(a,b) a>b?a:b
+
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
@@ -92,16 +95,37 @@ void render(HWND hWnd) {
         int width = img->_width;
         int height = img->_height;
 
-        DWORD* dwpBmpBuf = (DWORD*)bmpBuf + user.x + (bufPitch / 4 * user.y);
-        DWORD* dwpUserBuf = (DWORD*)img->_idleBuf;
+        int left = user.x - width / 2;
+        int right = left + width;
+        int top = user.y - height;
+        int bottom = user.y;
 
-        for (int cntHeight = 0; cntHeight < height; cntHeight++) {
-            for (int cntWidth = 0; cntWidth < width; cntWidth++, dwpUserBuf++) {
-                if ((*dwpUserBuf & 0x00ffffff) == 0x00ffffff) {
+
+        DWORD* dwpUserBuf = (DWORD*)img->_idleBuf;
+        if (left < 0) {
+            dwpUserBuf -= left;
+            left = 0;
+        }
+        right = MIN(640, right);
+
+        if (top < 0) {
+            dwpUserBuf += -top * width;
+            top = 0;
+        }
+        bottom = MIN(480, bottom);
+
+        DWORD* dwpBmpBuf = (DWORD*)bmpBuf + left + (bufPitch / 4 * top);
+
+        for (int cntY = top; cntY < bottom; cntY++) {
+            for (int cntX = left; cntX < right; cntX++) {
+                /*
+                if ((*(dwpUserBuf + cntX - left) & 0x00ffffff) == 0x00ffffff) {
                     continue;
                 }
-                memcpy(dwpBmpBuf + cntWidth, dwpUserBuf, sizeof(DWORD));
+                */
+                memcpy(dwpBmpBuf + cntX - left, dwpUserBuf + cntX - left, sizeof(DWORD));
             }
+            dwpUserBuf += width;
             dwpBmpBuf += bufPitch / 4;
         }
     }
@@ -118,6 +142,7 @@ void input() {
 BYTE* loadImage(const WCHAR* fileDir, int* width = nullptr, int* height = nullptr) {
 
     BYTE* buf;
+    BYTE* reverseBuf;
 
     FILE* bmpFile;
     _wfopen_s(&bmpFile, fileDir, L"rb");
@@ -128,16 +153,32 @@ BYTE* loadImage(const WCHAR* fileDir, int* width = nullptr, int* height = nullpt
     bmpInfo.biSize = sizeof(BITMAPINFOHEADER);
     fread(&bmpHead, sizeof(BITMAPFILEHEADER), 1, bmpFile);
     fread(&bmpInfo, sizeof(BITMAPINFOHEADER), 1, bmpFile);
-    buf = (BYTE*)malloc(sizeof(BYTE) * bmpInfo.biHeight * bmpInfo.biWidth * 4);
+    //bmpInfo.biHeight = -bmpInfo.biHeight;
+    DWORD bufSize = sizeof(BYTE) * bmpInfo.biHeight * bmpInfo.biWidth * 4;
+    buf = (BYTE*)malloc(bufSize);
+    reverseBuf = (BYTE*)malloc(bufSize);
     DWORD pitch = (bmpInfo.biWidth * bmpInfo.biBitCount / 8 + 3) & ~3;
     fread(buf, sizeof(BYTE), bmpInfo.biHeight * bmpInfo.biWidth * 4, bmpFile);
+
+    BYTE* pBuf = buf;
+    BYTE* pReverseBuf = reverseBuf + bufSize - pitch;
+
+    for (DWORD heightCnt = 0; heightCnt < bmpInfo.biHeight; heightCnt++) {
+        memcpy(pReverseBuf, pBuf,
+            sizeof(BYTE) * bmpInfo.biWidth * 4);
+        pReverseBuf -= pitch;
+        pBuf += pitch;
+    }
 
     if (width != nullptr) {
         *width = bmpInfo.biWidth;
         *height = bmpInfo.biHeight;
     }
 
-    return buf;
+    fclose(bmpFile);
+
+    free(buf);
+    return reverseBuf;
 }
 
 void init(HWND hWnd) {
@@ -216,8 +257,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_MOUSEMOVE:
-        user.x = GET_X_LPARAM(lParam) - user.idle->_images[0]._width / 2;
-        user.y = 480 - (GET_Y_LPARAM(lParam) + user.idle->_images[1]._height / 2);
+        user.x = GET_X_LPARAM(lParam);
+        user.y = GET_Y_LPARAM(lParam);
         mouseMoveNow = true;
         QueryPerformanceCounter(&mouseMoveTime);
         break;
