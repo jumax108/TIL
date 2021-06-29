@@ -22,17 +22,21 @@ RECT rtClient;
 
 BYTE* backgroundBuf;
 
-LARGE_INTEGER startTick;
-LARGE_INTEGER endTick;
-
 stSprite user;
 
 LARGE_INTEGER mouseMoveTime;
 bool mouseMoveNow;
 LARGE_INTEGER freq;
 
-void update() {
+int logicCnt = 0;
+int renderCnt = 0;
 
+WCHAR logicFrame[100] = { 0, };
+WCHAR renderFrame[100] = { 0, };
+
+void update() {
+    Sleep(5);
+    logicCnt += 1;
     LARGE_INTEGER now;
     QueryPerformanceCounter(&now);
 
@@ -63,10 +67,13 @@ void update() {
         ani->nextImage();
     }
     
+    
+
 }
 
 void render(HWND hWnd) {
-    
+
+    renderCnt += 1;
     BYTE* bmpBuf;
     int bufWidth;
     int bufHeight;
@@ -131,8 +138,10 @@ void render(HWND hWnd) {
     }
     // ----------------------------------------------------------------------
 
-
     CScreenDib::getInstance()->flip(hWnd);
+
+    //Sleep(60);
+
 }
 
 void input() {
@@ -184,7 +193,7 @@ BYTE* loadImage(const WCHAR* fileDir, int* width = nullptr, int* height = nullpt
 void init(HWND hWnd) {
     
     QueryPerformanceFrequency(&freq);
-    freq.QuadPart = freq.QuadPart / 1000;
+    freq.QuadPart = freq.QuadPart / 1000000;
     CScreenDib::setInstance(640, 480, 32);
 
     // ----------------------------------------------------------------------
@@ -256,6 +265,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CREATE:
+        //setTimer(hWnd, 0, 1000, NULL);
+        break;
+    case WM_TIMER: 
+        {
+        }
+        break;
     case WM_MOUSEMOVE:
         user.x = GET_X_LPARAM(lParam);
         user.y = GET_Y_LPARAM(lParam);
@@ -332,10 +348,41 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    // 기본 메시지 루프입니다:
+    AllocConsole();
+    FILE* fp = nullptr;
+    freopen_s(&fp, "CONOUT$", "w+", stdout);
 
+    //QueryPerformanceFrequency
+    // 기본 메시지 루프입니다:
+    //QueryPerformanceCounter(&startTick);
+
+
+    LARGE_INTEGER startTick = {0, };
+    LARGE_INTEGER endTick = {0, };
+    
+    LARGE_INTEGER fpsStart = {0, };
+    LARGE_INTEGER fpsEnd = {0, };
+    __int64 fpsStartTime = fpsStart.QuadPart / freq.QuadPart;
+    QueryPerformanceCounter(&fpsStart);
+    
+    
+    timeBeginPeriod(1);
+
+    __int64 startTime = 0;
+    __int64 endTime;
+    __int64 frameTime;
+    int delayTime;
+    int intervalTime = 20 * 1000;
+
+    __int64 remainDelayTime = 0; 
+
+    bool renderSkip = false;
+
+    QueryPerformanceCounter(&fpsStart);
+    fpsStartTime = fpsStart.QuadPart / freq.QuadPart;
+    QueryPerformanceCounter(&startTick);
+    startTime = startTick.QuadPart / freq.QuadPart;
     do {
-        QueryPerformanceCounter(&startTick);
 
         if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
@@ -344,9 +391,51 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         else {
             input();
             update();
-            render(hWnd);
+            renderSkip = false;
             QueryPerformanceCounter(&endTick);
-            Sleep(20 - (endTick.QuadPart / freq.QuadPart - startTick.QuadPart / freq.QuadPart));
+            QueryPerformanceCounter(&startTick);
+            endTime = endTick.QuadPart / freq.QuadPart;
+            frameTime = endTime - startTime;
+            startTime = startTick.QuadPart / freq.QuadPart;
+            remainDelayTime += intervalTime - frameTime;
+            
+            if (remainDelayTime > 0) {
+                delayTime = remainDelayTime / 1000;
+                remainDelayTime -= delayTime * 1000;
+                Sleep(delayTime);
+                startTime += delayTime * 1000;
+            }
+            else {
+                renderSkip = true;
+            }
+
+            printf("%lld %lld %d %d %lld\n", startTime, endTime, frameTime, delayTime, remainDelayTime);
+
+
+            if (renderSkip == false) {
+                render(hWnd);
+            }
+
+            QueryPerformanceCounter(&fpsEnd);
+            __int64 fpsEndTime = fpsEnd.QuadPart / freq.QuadPart;
+            if (fpsEndTime - fpsStartTime >= (__int64)1000 * 1000) {
+                //printf("%d %d %d\n", fpsEndTime, fpsStartTime, fpsEndTime - fpsStartTime);
+                QueryPerformanceCounter(&fpsStart);
+                fpsStartTime = fpsStart.QuadPart / freq.QuadPart;
+                
+                wsprintfW(logicFrame, L"Logic FPS: %d", logicCnt);
+                wsprintfW(renderFrame, L"render FPS: %d", renderCnt);
+                logicCnt = 0;
+                renderCnt = 0;
+
+
+            }
+            HDC hdc = GetDC(hWnd);
+            TextOutW(hdc, 0, 0, logicFrame, wcslen(logicFrame));
+            TextOutW(hdc, 0, 20, renderFrame, wcslen(renderFrame));
+            ReleaseDC(hWnd, hdc);
+
+                
         }
 
     } while (msg.message != WM_QUIT);

@@ -16,3 +16,6 @@
 #include <tchar.h>
 #include <cstdio>
 #include <new>
+#include <io.h>
+#include <fcntl.h>
+#include <timeapi.h>
