@@ -30,4 +30,5 @@ void CScreenDib::flip(HWND hWnd) {
 	HDC hdc = GetDC(hWnd);
 	SetDIBitsToDevice(hdc, 0, 0, _width, _height,
 		0, 0, 0, _height, _bmpBuf, &_bmpInfo, DIB_RGB_COLORS);
+	ReleaseDC(hWnd, hdc);
 }

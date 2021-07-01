@@ -18,7 +18,6 @@ int wmain(int argc, WCHAR* argv[]) {
 	wprintf(L"hahaha\n");
 
 	wprintf(L"[child end]\n");
-
 	
 
 	system("PAUSE>NUL");
