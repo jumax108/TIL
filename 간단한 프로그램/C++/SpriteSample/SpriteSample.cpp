@@ -4,6 +4,9 @@
 #include "framework.h"
 #include "resource.h"
 #include "ScreenDib.h"
+#include "Image.h"
+#include "Animation.h"
+#include "SpriteData.h"
 #include "Sprite.h"
 
 #define MIN(a,b) a>b?b:a
@@ -16,13 +19,16 @@ HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
 
+const int CLIENT_WIDTH = 640;
+const int CLIENT_HEIGHT = 480;
+
 HDC hMemDC;
 HBITMAP hBufBmp;
 RECT rtClient;
 
 BYTE* backgroundBuf;
-
-stSprite user;
+CSpriteData* spriteData;
+CSprite* user;
 
 LARGE_INTEGER mouseMoveTime;
 bool mouseMoveNow;
@@ -34,40 +40,77 @@ int renderCnt = 0;
 WCHAR logicFrame[100] = { 0, };
 WCHAR renderFrame[100] = { 0, };
 
+
+enum class INPUT_MESSAGE {
+    NONE = -1,
+    MOVE_LL,
+    MOVE_LU,
+    MOVE_UU,
+    MOVE_RU,
+    MOVE_RR,
+    MOVE_RD,
+    MOVE_DD,
+    MOVE_LD
+};
+
+INPUT_MESSAGE msg;
+
+void userUpdate(void* argv) {
+
+    switch (*(INPUT_MESSAGE*)argv) {
+    case INPUT_MESSAGE::MOVE_DD:
+        user->_y += 2;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::MOVE_LD:
+        user->_y += 2;
+        user->_x -= 3;
+        user->_seeRight = false;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::MOVE_LL:
+        user->_x -= 3;
+        user->_seeRight = false;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::MOVE_LU:
+        user->_x -= 3;
+        user->_y -= 2;
+        user->_seeRight = false;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::MOVE_RD:
+        user->_x += 3;
+        user->_y += 2;
+        user->_seeRight = true;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::MOVE_RR:
+        user->_x += 3;
+        user->_seeRight = true;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::MOVE_RU:
+        user->_x += 3;
+        user->_y -= 2;
+        user->_seeRight = true;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::MOVE_UU:
+        user->_y -= 2;
+        user->setAnimation(2);
+        break;
+    case INPUT_MESSAGE::NONE:
+        user->setAnimation(0);
+        break;
+    }
+}
+
 void update() {
-    Sleep(5);
-    logicCnt += 1;
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
 
-    if (mouseMoveNow == true && now.QuadPart / freq.QuadPart - mouseMoveTime.QuadPart / freq.QuadPart > 300) {
-        mouseMoveNow = false;
-        user.state = stSprite::STATE::idle;
-        user.idle->init();
-    }
+    ++logicCnt;
 
-    if (mouseMoveNow == true) {
-        if (user.state == stSprite::STATE::idle) {
-            user.move->init();
-        }
-        user.state = stSprite::STATE::move;
-    }
-
-    stAnimation* ani = user.getCurrentAnimation();
-    stImage* img = ani->getCurrentImage();
-    int* frame = &(img->_currentSpendFrame);
-    *frame += 1;
-    if (*frame == img->_delayFrame) {
-        *frame = 0;
-        if (ani->_currentImage == ani->_imageNum - 1 && user.state == stSprite::STATE::attack) {
-            user.state = stSprite::STATE::idle;
-            user.idle->init();
-            return;
-        }
-        ani->nextImage();
-    }
-    
-    
+    user->update(&msg);
 
 }
 
@@ -95,48 +138,7 @@ void render(HWND hWnd) {
     memcpy(bmpBuf, backgroundBuf, bufSize);
     // ----------------------------------------------------------------------
    
-    // ----------------------------------------------------------------------
-    // 플레이어 캐릭터 출력
-    {
-        stImage* img = user.getCurrentAnimation()->getCurrentImage();
-        int width = img->_width;
-        int height = img->_height;
-
-        int left = user.x - width / 2;
-        int right = left + width;
-        int top = user.y - height;
-        int bottom = user.y;
-
-
-        DWORD* dwpUserBuf = (DWORD*)img->_idleBuf;
-        if (left < 0) {
-            dwpUserBuf -= left;
-            left = 0;
-        }
-        right = MIN(640, right);
-
-        if (top < 0) {
-            dwpUserBuf += -top * width;
-            top = 0;
-        }
-        bottom = MIN(480, bottom);
-
-        DWORD* dwpBmpBuf = (DWORD*)bmpBuf + left + (bufPitch / 4 * top);
-
-        for (int cntY = top; cntY < bottom; cntY++) {
-            for (int cntX = left; cntX < right; cntX++) {
-                /*
-                if ((*(dwpUserBuf + cntX - left) & 0x00ffffff) == 0x00ffffff) {
-                    continue;
-                }
-                */
-                memcpy(dwpBmpBuf + cntX - left, dwpUserBuf + cntX - left, sizeof(DWORD));
-            }
-            dwpUserBuf += width;
-            dwpBmpBuf += bufPitch / 4;
-        }
-    }
-    // ----------------------------------------------------------------------
+    user->draw();
 
     CScreenDib::getInstance()->flip(hWnd);
 
@@ -145,6 +147,46 @@ void render(HWND hWnd) {
 }
 
 void input() {
+
+
+    short upState = GetAsyncKeyState(VK_UP);
+    short leftState = GetAsyncKeyState(VK_LEFT);
+    short rightState = GetAsyncKeyState(VK_RIGHT);
+    short downState = GetAsyncKeyState(VK_DOWN);
+
+    if (upState) {
+        if (leftState) {
+            msg = INPUT_MESSAGE::MOVE_LU;
+        }
+        else if (rightState) {
+            msg = INPUT_MESSAGE::MOVE_RU;
+        }
+        else {
+            msg = INPUT_MESSAGE::MOVE_UU;
+        }
+    }
+    else if (leftState) {
+        if (downState) {
+            msg = INPUT_MESSAGE::MOVE_LD;
+        }
+        else {
+            msg = INPUT_MESSAGE::MOVE_LL;
+        }
+    }
+    else if (rightState) {
+        if (downState) {
+            msg = INPUT_MESSAGE::MOVE_RD;
+        }
+        else {
+            msg = INPUT_MESSAGE::MOVE_RR;
+        }
+    }
+    else if(downState) {
+        msg = INPUT_MESSAGE::MOVE_DD;
+    }
+    else {
+        msg = INPUT_MESSAGE::NONE;
+    }
 
 }
 
@@ -198,63 +240,60 @@ void init(HWND hWnd) {
 
     // ----------------------------------------------------------------------
     // 배경 로드
-    backgroundBuf = loadImage(L".\\Sprite_Data\\_Map.bmp");
+    backgroundBuf = loadImage(L"Sprite_Data\\_Map.bmp");
     // ----------------------------------------------------------------------
 
-
+    DWORD aniNum = 4;
+    DWORD* imgNums = (DWORD*)malloc(sizeof(DWORD) * aniNum);
+    imgNums[0] = 3;
+    imgNums[1] = 3;
+    imgNums[2] = 12;
+    imgNums[3] = 12;
+    spriteData = new CSpriteData(aniNum, imgNums);
     // ----------------------------------------------------------------------
     // user idle 애니메이션 로드
-    {
-        constexpr int imgNum = 3;
-        user.idle = new stAnimation(imgNum);
-        stImage* imgs = user.idle->_images;
-        int delay[imgNum] = { 5,5,5 };
-        for (int imgCnt = 0; imgCnt < imgNum; imgCnt++) {
-            new(&(imgs[imgCnt])) stImage(delay[imgCnt]);
-            WCHAR* fileDir = new WCHAR[255];
-            wsprintfW(fileDir, L".\\Sprite_Data\\Stand_L_%02d.bmp", imgCnt + 1);
-            imgs[imgCnt]._idleBuf = loadImage(fileDir, &(imgs[imgCnt]._width), &(imgs[imgCnt]._height));
-            delete fileDir;
-        }
-    }
-    // ----------------------------------------------------------------------
+    (*spriteData)[0]->loadImage(0, L"Sprite_Data\\Stand_L_01.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[0]->loadImage(1, L"Sprite_Data\\Stand_L_02.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[0]->loadImage(2, L"Sprite_Data\\Stand_L_03.bmp", 5, 71, 90, 0xffffffff);
 
+    (*spriteData)[1]->loadImage(0, L"Sprite_Data\\Stand_R_01.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[1]->loadImage(1, L"Sprite_Data\\Stand_R_02.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[1]->loadImage(2, L"Sprite_Data\\Stand_R_03.bmp", 5, 71, 90, 0xffffffff);
+    // ----------------------------------------------------------------------
+    // 
     // ----------------------------------------------------------------------
     // user move 애니메이션 로드
-    {
-        constexpr int imgNum = 12;
-        user.move = new stAnimation(imgNum);
-        stImage* imgs = user.move->_images;
-        int delay[imgNum] = { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
-        for (int imgCnt = 0; imgCnt < imgNum; imgCnt++) {
-            new(&(imgs[imgCnt])) stImage(delay[imgCnt]);
-            WCHAR* fileDir = new WCHAR[255];
-            wsprintfW(fileDir, L".\\Sprite_Data\\Move_L_%02d.bmp", imgCnt + 1);
-            imgs[imgCnt]._idleBuf = loadImage(fileDir, &(imgs[imgCnt]._width), &(imgs[imgCnt]._height));
-            delete fileDir;
-        }
-    }
+    (*spriteData)[2]->loadImage(0, L"Sprite_Data\\Move_L_01.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(1, L"Sprite_Data\\Move_L_02.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(2, L"Sprite_Data\\Move_L_03.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(3, L"Sprite_Data\\Move_L_04.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(4, L"Sprite_Data\\Move_L_05.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(5, L"Sprite_Data\\Move_L_06.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(6, L"Sprite_Data\\Move_L_07.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(7, L"Sprite_Data\\Move_L_08.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(8, L"Sprite_Data\\Move_L_09.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(9, L"Sprite_Data\\Move_L_10.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(10, L"Sprite_Data\\Move_L_11.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[2]->loadImage(11, L"Sprite_Data\\Move_L_12.bmp", 5, 71, 90, 0xffffffff);
+
+    (*spriteData)[3]->loadImage(0, L"Sprite_Data\\Move_R_01.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(1, L"Sprite_Data\\Move_R_02.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(2, L"Sprite_Data\\Move_R_03.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(3, L"Sprite_Data\\Move_R_04.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(4, L"Sprite_Data\\Move_R_05.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(5, L"Sprite_Data\\Move_R_06.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(6, L"Sprite_Data\\Move_R_07.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(7, L"Sprite_Data\\Move_R_08.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(8, L"Sprite_Data\\Move_R_09.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(9, L"Sprite_Data\\Move_R_10.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(10, L"Sprite_Data\\Move_R_11.bmp", 5, 71, 90, 0xffffffff);
+    (*spriteData)[3]->loadImage(11, L"Sprite_Data\\Move_R_12.bmp", 5, 71, 90, 0xffffffff);
     // ----------------------------------------------------------------------
 
-     // ----------------------------------------------------------------------
-    // user attack 애니메이션 로드
-    {
-        constexpr int imgNum = 4;
-        user.attack = new stAnimation(imgNum);
-        stImage* imgs = user.attack->_images;
-        int delay[imgNum] = { 3, 3, 3, 3 };
-        for (int imgCnt = 0; imgCnt < imgNum; imgCnt++) {
-            new(&(imgs[imgCnt])) stImage(delay[imgCnt]);
-            WCHAR* fileDir = new WCHAR[255];
-            wsprintfW(fileDir, L".\\Sprite_Data\\Attack1_L_%02d.bmp", imgCnt + 1);
-            imgs[imgCnt]._idleBuf = loadImage(fileDir, &(imgs[imgCnt]._width), &(imgs[imgCnt]._height));
-            delete fileDir;
-        }
-    }
-    // ----------------------------------------------------------------------
+    user = new CSprite(spriteData, userUpdate);
 
-    user.x = 100;
-    user.y = 100;
+    user->_x = 100;
+    user->_y = 200;
 
     return;
 }
@@ -265,27 +304,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_CREATE:
-        //setTimer(hWnd, 0, 1000, NULL);
-        break;
-    case WM_TIMER: 
-        {
-        }
-        break;
-    case WM_MOUSEMOVE:
-        user.x = GET_X_LPARAM(lParam);
-        user.y = GET_Y_LPARAM(lParam);
-        mouseMoveNow = true;
-        QueryPerformanceCounter(&mouseMoveTime);
-        break;
-    case WM_LBUTTONDOWN:
-        {
-            if (user.state == stSprite::STATE::idle) {
-                user.state = stSprite::STATE::attack;
-                user.attack->init();
-            }
-        }
-        break;
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
@@ -339,7 +357,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
     HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_CAPTION | WS_THICKFRAME | WS_SYSMENU,
-        0, 0, 640, 480, nullptr, nullptr, hInstance, nullptr);
+        0, 0, CLIENT_WIDTH, CLIENT_HEIGHT, nullptr, nullptr, hInstance, nullptr);
+
+    RECT rt = {0,};
+    rt.right = CLIENT_WIDTH;
+    rt.bottom = CLIENT_HEIGHT;
+
+    AdjustWindowRectEx(&rt, GetWindowStyle(hWnd), GetMenu(hWnd) != NULL, GetWindowExStyle(hWnd));
+
+    MoveWindow(hWnd, 0, 0, rt.right, rt.bottom, false);
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
