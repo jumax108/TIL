@@ -7,6 +7,7 @@
 CRingBuffer::CRingBuffer(UINT capacity) {
 	_capacity = capacity;
 	_buffer = (BYTE*)malloc(sizeof(BYTE) * capacity);
+	ZeroMemory(_buffer, sizeof(BYTE) * capacity);
 	_rear = 0;
 	_front = 0;
 	_size = 0;
@@ -53,7 +54,7 @@ bool CRingBuffer::front(UINT size, BYTE* buffer) {
 	}
 
 	for (UINT bufCnt = 0; bufCnt < size; ++bufCnt) {
-		buffer[bufCnt] = _buffer[(bufCnt + _rear) % _capacity];
+		buffer[bufCnt] = _buffer[(bufCnt + _front) % _capacity];
 	}
 
 	return true;

@@ -4,24 +4,48 @@
 
 int main() {
 
-	CRingBuffer ringBuffer(10);
+	constexpr int BUFFER_SIZE = 10;
 
-	const BYTE* str = (const BYTE*)"Hello";
+	CRingBuffer ringBuffer(BUFFER_SIZE);
+
+	const BYTE* str = (const BYTE*)"HelloWorld";
 	const BYTE* str2 = (const BYTE*)"World";
-	const BYTE* str3 = (const BYTE*)"hahahaha";
 
-	BYTE* res = (BYTE*)malloc(sizeof(BYTE) * 100);
-	ZeroMemory(res, 100);
+	int strLen = strlen((const char*)str);
+	int str2Len = strlen((const char*)str2);
 
-	ringBuffer.push(strlen((const char*)str), str);
-	ringBuffer.pop(4);
-	ringBuffer.push(strlen((const char*)str2), str2);
-	ringBuffer.pop(4);
-	ringBuffer.push(strlen((const char*)str3), str3);
 
-	ringBuffer.front(10, res);
+	BYTE* res = (BYTE*)malloc(sizeof(BYTE) * (BUFFER_SIZE + 1));
+	ZeroMemory(res, BUFFER_SIZE + 1);
 
+	ringBuffer.push(str2Len, str2);
+	ringBuffer.front(str2Len, res);
+	ringBuffer.pop(str2Len);
 	printf("%s\n", res);
 
+	ringBuffer.push(strLen, str);
+	ringBuffer.front(strLen, res);
+	ringBuffer.pop(strLen);
+	printf("%s\n", res);
+
+	ringBuffer.push(strLen, str);
+	ringBuffer.front(strLen, res);
+	ringBuffer.pop(strLen);
+	printf("%s\n", res);
+
+	ringBuffer.push(strLen, str);
+	ringBuffer.front(strLen, res);
+	ringBuffer.pop(strLen);
+	printf("%s\n", res);
+
+	ringBuffer.push(strLen, str);
+	ringBuffer.front(strLen, res);
+	ringBuffer.pop(strLen);
+	printf("%s\n", res);
+
+	ringBuffer.push(strLen, str);
+	ringBuffer.front(strLen, res);
+	ringBuffer.pop(strLen);
+	printf("%s\n", res);
 	return 0;
 }
