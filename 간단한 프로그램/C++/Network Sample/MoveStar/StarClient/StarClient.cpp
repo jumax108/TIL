@@ -2,6 +2,7 @@
 #include <WinSock2.h>
 #include <locale.h>
 #include <ws2tcpip.h>
+#include <time.h>
 
 #include "ringBuffer.h"
 #include "myStack.h"
@@ -63,6 +64,8 @@ struct stStar {
 
 CQueue<BYTE> keyBuffer(5);
 
+BYTE starNum = 0;
+USHORT packetPerSec = 0;
 my::stack<BYTE> starIndex(63);
 stStar star[63];
 stStar* myStar;
@@ -212,6 +215,7 @@ bool network() {
 				return false;
 			}
 		}
+		packetPerSec += sendSize;
 
 	}
 	/////////////////////////////////////////
@@ -231,7 +235,17 @@ bool network() {
 
 }
 
+int beforeClock = 0;
 void logic() {
+
+	////////////////////////////////////////////////////////////////////
+	// 1초마다 packetPerSec 변수 초기화
+	int nowClock = clock();
+	if (nowClock - beforeClock >= 1000) {
+		packetPerSec = 0;
+		beforeClock = nowClock;
+	}
+	////////////////////////////////////////////////////////////////////
 
 	////////////////////////////////////////////////////////////////////
 	// 네트워크 메시지 처리
@@ -262,6 +276,7 @@ void logic() {
 				newStar->id = msg->id;
 				newStar->x = msg->x;
 				newStar->y = msg->y;
+				starNum += 1;
 			}
 			break;
 		case MESSAGE_TYPE::DELETE_STAR: 
@@ -275,6 +290,7 @@ void logic() {
 					if (nowStar->id == delStarId) {
 						nowStar->id = -1;
 						starIndex.push(starCnt);
+						starNum -= 1;
 						break;
 					}
 
@@ -388,11 +404,19 @@ void init() {
 		starIndex.push(starCnt);
 	}
 
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	CONSOLE_CURSOR_INFO cursorInfo;
+	GetConsoleCursorInfo(consoleHandle, &cursorInfo);
+	cursorInfo.bVisible = false;
+	SetConsoleCursorInfo(consoleHandle, &cursorInfo);
 
 }
 
 void render() {
 	
+	wprintf(L"stars: %d, packet: %d\n", starNum, packetPerSec);
+
 	for (int colCnt = 0; colCnt < 23; colCnt++) {
 		for (int rowCnt = 0; rowCnt < 80; rowCnt++) {
 			stStar* nowStar = star;
