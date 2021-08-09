@@ -18,13 +18,21 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="myStack.h" />
+    <ClInclude Include="queue.h" />
+    <ClInclude Include="ringBuffer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ringBuffer.cpp" />
+    <ClCompile Include="StarClient.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{dfb3ab55-fca6-4b86-9f82-44958be4ca06}</ProjectGuid>
-    <RootNamespace>StartClient</RootNamespace>
+    <ProjectGuid>{5bbb6d2f-c605-445a-b8a8-7cce5350c3c4}</ProjectGuid>
+    <RootNamespace>StarClient</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>StarClient</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -133,6 +141,7 @@
       <ConformanceMode>true</ConformanceMode>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,14 +150,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="ringBuffer.cpp" />
-    <ClCompile Include="StarClient.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="myStack.h" />
-    <ClInclude Include="ringBuffer.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

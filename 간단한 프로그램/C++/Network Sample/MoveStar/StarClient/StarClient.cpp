@@ -5,6 +5,7 @@
 
 #include "ringBuffer.h"
 #include "myStack.h"
+#include "queue.h"
 
 #pragma comment(lib, "ws2_32")
 
@@ -60,7 +61,7 @@ struct stStar {
 };
 
 
-my::stack<BYTE> keyBuffer(5);
+CQueue<BYTE> keyBuffer(5);
 
 my::stack<BYTE> starIndex(63);
 stStar star[63];
@@ -220,6 +221,8 @@ bool network() {
 	// except
 	if (FD_ISSET(sock, &exceptSet) == true) {
 		
+		wprintf(L"select except, connect error");
+		return false;
 		
 	}
 	/////////////////////////////////////////
@@ -323,9 +326,10 @@ void logic() {
 	////////////////////////////////////////////////////////////////////
 	// keyboard input logic
 	bool moveThisFrame = false;
-	while (keyBuffer.getSize() > 0) {
+	while (keyBuffer.size() > 0) {
 
-		BYTE keyCode = keyBuffer.front();
+		BYTE keyCode;
+		keyBuffer.front(&keyCode);
 		keyBuffer.pop();
 
 		switch (keyCode) {
