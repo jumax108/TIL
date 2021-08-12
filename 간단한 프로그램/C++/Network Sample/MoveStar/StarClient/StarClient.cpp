@@ -61,6 +61,10 @@ struct stStar {
 
 };
 
+constexpr int MAP_HEIGHT = 24;
+constexpr int MAP_WIDTH = 81;
+WCHAR map[MAP_HEIGHT][MAP_WIDTH + 1] = {0, };
+
 
 CQueue<BYTE> keyBuffer(5);
 
@@ -131,6 +135,89 @@ bool networkInit() {
 	return true;
 }
 
+void packetProcess() {
+
+
+	////////////////////////////////////////////////////////////////////
+	// 네트워크 메시지 처리
+	BYTE msgData[16];
+	int msgType;
+	while (recvBuffer.size() > 0) {
+
+		recvBuffer.front(16, msgData);
+		recvBuffer.pop(16);
+
+		msgType = *(int*)msgData;
+		switch ((MESSAGE_TYPE)msgType) {
+		case MESSAGE_TYPE::GET_ID:
+		{
+			stMsgGetId* msg = (stMsgGetId*)msgData;
+			tempId = msg->id;
+		}
+		break;
+		case MESSAGE_TYPE::CREATE_STAR:
+		{
+			stMsgCreateStar* msg = (stMsgCreateStar*)msgData;
+			int useStarIndex;
+			stStar* newStar;
+
+			useStarIndex = starIndex.front();
+			starIndex.pop();
+			newStar = &star[useStarIndex];
+			newStar->id = msg->id;
+			newStar->x = msg->x;
+			newStar->y = msg->y;
+			starNum += 1;
+
+			map[newStar->y][newStar->x] = L'*';
+		}
+		break;
+		case MESSAGE_TYPE::DELETE_STAR:
+		{
+			stMsgDeleteStar* msg = (stMsgDeleteStar*)msgData;
+
+			int delStarId = msg->id;
+			stStar* nowStar = star;
+			for (BYTE starCnt = 0; starCnt < 63; ++starCnt, ++nowStar) {
+
+				if (nowStar->id == delStarId) {
+					nowStar->id = -1;
+					starIndex.push(starCnt);
+					starNum -= 1;
+					map[nowStar->y][nowStar->x] = L' ';
+					break;
+				}
+
+			}
+		}
+		break;
+		case MESSAGE_TYPE::MOVE_STAR:
+		{
+			stMsgMoveStar* msg = (stMsgMoveStar*)msgData;
+
+			int moveStarId = msg->id;
+			stStar* nowStar = star;
+			for (BYTE starCnt = 0; starCnt < 63; ++starCnt, ++nowStar) {
+
+				if (nowStar->id == moveStarId) {
+
+					map[nowStar->y][nowStar->x] = L' ';
+					nowStar->x = msg->x;
+					nowStar->y = msg->y;
+					map[nowStar->y][nowStar->x] = L'*';
+
+				}
+
+			}
+		}
+		break;
+		}
+
+	}
+	////////////////////////////////////////////////////////////////////
+
+}
+
 bool isConnected = false;
 bool network() {
 
@@ -170,7 +257,7 @@ bool network() {
 
 	int recvResult;
 	int recvErrorCode;
-	constexpr USHORT RECV_BUF_SIZE = 255;
+	constexpr USHORT RECV_BUF_SIZE = 3000;
 	char recvTempBuf[RECV_BUF_SIZE];
 	if (FD_ISSET(sock, &readSet) == true) {
 
@@ -186,6 +273,8 @@ bool network() {
 
 		recvBuffer.push(recvResult, (const BYTE*)recvTempBuf);
 
+		packetProcess();
+
 	}
 	////////////////////////////////////////
 
@@ -195,7 +284,7 @@ bool network() {
 
 	int sendResult;
 	int sendErrorCode;
-	constexpr USHORT SEND_BUF_SIZE = 255;
+	constexpr USHORT SEND_BUF_SIZE = 3000;
 	char sendTempBuf[SEND_BUF_SIZE];
 	int sendSize = sendBuffer.size();
 	if (sendSize > SEND_BUF_SIZE) {
@@ -206,7 +295,7 @@ bool network() {
 		sendBuffer.front(sendSize, (BYTE*)sendTempBuf);
 		sendBuffer.pop(sendSize);
 
-		sendResult = send(sock, sendTempBuf, SEND_BUF_SIZE, 0);
+		sendResult = send(sock, sendTempBuf, sendSize, 0);
 		if (sendResult == 0 || sendResult == SOCKET_ERROR) {
 
 			sendErrorCode = WSAGetLastError();
@@ -248,79 +337,6 @@ void logic() {
 	////////////////////////////////////////////////////////////////////
 
 	////////////////////////////////////////////////////////////////////
-	// 네트워크 메시지 처리
-	BYTE msgData[16];
-	int msgType;
-	while (recvBuffer.size() > 0) {
-
-		recvBuffer.front(16, msgData);
-		recvBuffer.pop(16);
-
-		msgType = *(int*)msgData;
-		switch ((MESSAGE_TYPE)msgType) {
-		case MESSAGE_TYPE::GET_ID: 
-			{
-				stMsgGetId* msg = (stMsgGetId*)msgData;
-				tempId = msg->id;
-			}
-			break;
-		case MESSAGE_TYPE::CREATE_STAR: 
-			{
-				stMsgCreateStar* msg = (stMsgCreateStar*)msgData;
-				int useStarIndex;
-				stStar* newStar;
-
-				useStarIndex = starIndex.front();
-				starIndex.pop();
-				newStar = &star[useStarIndex];
-				newStar->id = msg->id;
-				newStar->x = msg->x;
-				newStar->y = msg->y;
-				starNum += 1;
-			}
-			break;
-		case MESSAGE_TYPE::DELETE_STAR: 
-			{
-				stMsgDeleteStar* msg = (stMsgDeleteStar*)msgData;
-
-				int delStarId = msg->id;
-				stStar* nowStar = star;
-				for (BYTE starCnt = 0; starCnt < 63; ++starCnt, ++nowStar) {
-
-					if (nowStar->id == delStarId) {
-						nowStar->id = -1;
-						starIndex.push(starCnt);
-						starNum -= 1;
-						break;
-					}
-
-				}
-			}
-			break;
-		case MESSAGE_TYPE::MOVE_STAR: 
-			{
-				stMsgMoveStar* msg = (stMsgMoveStar*)msgData;
-
-				int moveStarId = msg->id;
-				stStar* nowStar = star;
-				for (BYTE starCnt = 0; starCnt < 63; ++starCnt, ++nowStar) {
-
-					if (nowStar->id == moveStarId) {
-
-						nowStar->x = msg->x;
-						nowStar->y = msg->y;
-
-					}
-
-				}
-			}
-			break;
-		}
-
-	}
-	////////////////////////////////////////////////////////////////////
-
-	////////////////////////////////////////////////////////////////////
 	// 서버로 부터 ID 받으면 내 별이 어디에 저장되어 있는지 확인
 	// 못찾으면 다음 프레임에도 검색 (찾을때까지)
 	if (tempId != -1) {
@@ -350,26 +366,34 @@ void logic() {
 
 		switch (keyCode) {
 		case VK_UP:
-			if (myStar->y - 1 >= 0) {
+			if (myStar->y >= 1) {
+				map[myStar->y][myStar->x] = L' ';
 				myStar->y -= 1;
+				map[myStar->y][myStar->x] = L'*';
 			}
 			moveThisFrame = true;
 			break;
 		case VK_DOWN:
-			if (myStar->y + 1 < 23) {
+			if (myStar->y <  MAP_HEIGHT - 1) {
+				map[myStar->y][myStar->x] = L' ';
 				myStar->y += 1;
+				map[myStar->y][myStar->x] = L'*';
 			}
 			moveThisFrame = true;
 			break;
 		case VK_LEFT:
-			if (myStar->x - 1 >= 0) {
+			if (myStar->x >= 1) {
+				map[myStar->y][myStar->x] = L' ';
 				myStar->x -= 1;
+				map[myStar->y][myStar->x] = L'*';
 			}
 			moveThisFrame = true;
 			break;
 		case VK_RIGHT:
-			if (myStar->x + 1 < 80) {
+			if (myStar->x < MAP_WIDTH - 1) {
+				map[myStar->y][myStar->x] = L' ';
 				myStar->x += 1;
+				map[myStar->y][myStar->x] = L'*';
 			}
 			moveThisFrame = true;
 			break;
@@ -411,31 +435,21 @@ void init() {
 	cursorInfo.bVisible = false;
 	SetConsoleCursorInfo(consoleHandle, &cursorInfo);
 
+	for (int colCnt = 0; colCnt < MAP_HEIGHT; ++colCnt) {
+
+		wmemset(map[colCnt], L' ', MAP_WIDTH);
+
+	}
+
+
 }
 
 void render() {
 	
 	wprintf(L"stars: %d, packet: %d\n", starNum, packetPerSec);
 
-	for (int colCnt = 0; colCnt < 23; colCnt++) {
-		for (int rowCnt = 0; rowCnt < 80; rowCnt++) {
-			stStar* nowStar = star;
-			bool printBlank = true;
-			for (int starCnt = 0; starCnt < 63; ++starCnt, ++nowStar) {
-				if (nowStar->id == -1) {
-					continue;
-				}
-				if (nowStar->x == rowCnt && nowStar->y == colCnt) {
-					wprintf(L"*");
-					printBlank = false;
-					break;
-				}
-			}
-			if (printBlank == true) {
-				wprintf(L" ");
-			}
-		}
-		printf("\n");
+	for (int colCnt = 0; colCnt < MAP_HEIGHT; colCnt++) {
+		wprintf(L"%s\n", map[colCnt]);
 	}
 
 }
