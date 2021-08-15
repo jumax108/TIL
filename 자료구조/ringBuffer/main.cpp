@@ -1,51 +1,108 @@
 #include <stdio.h>
 #include <Windows.h>
+#include <time.h>
+
 #include "ringBuffer.h"
+
+#include "SimpleProfiler.h"
+
+SimpleProfiler sp;
+
+CRingBuffer rb(20);
+
+void unitTest() {
+
+	
+	BYTE* a = (BYTE*)"12345678 abcdefgh ";
+
+	srand(1008);
+
+	BYTE out[50] = {0,};
+
+	BYTE* strTemp = a;
+
+	int leftChar = 18;
+
+	for (;;) {
+
+		ZeroMemory(out, 50);
+
+		int bufFree;
+		rb.getFreeSize((UINT*)&bufFree);
+
+		int maxPushNum = (leftChar > bufFree ? bufFree : leftChar);
+		int pushSize = rand() % maxPushNum + 1;
+
+		rb.push(pushSize, strTemp);
+
+		strTemp += pushSize;
+
+		leftChar -= pushSize;
+
+		if (leftChar == 0) {
+			strTemp = a;
+			leftChar = 18;
+		}
+
+		int bufSize;
+		rb.getUsedSize((UINT*)&bufSize);
+
+		int popSize = rand() % bufSize + 1;
+
+		rb.front(popSize, out);
+		rb.pop(popSize);
+
+		printf("%s", out);
+
+		//printf("%s %d %d\n", out,rb._front, rb._rear);
+
+		//system("PAUSE>NUL");
+	}
+	
+
+
+}
+
+void speedCheck() {
+
+	const char* str = "123456789";
+	int strLen = strlen(str);
+
+	const int loopNum = 100000000;
+
+	for (int loopCnt = 0; loopCnt < loopNum; loopCnt++) {
+
+		sp.profileBegin("push");
+
+		rb.push(strLen, (const BYTE*)str);
+
+		sp.profileEnd("push");
+
+		char outbuf[20];
+
+		sp.profileBegin("front");
+
+		rb.front(strLen, (BYTE*)outbuf);
+
+		sp.profileEnd("front");
+
+		sp.profileBegin("pop");
+
+		rb.pop(strLen);
+
+		sp.profileEnd("pop");
+
+
+	}
+
+	sp.printToConsole();
+	sp.printToFile();
+
+}
 
 int main() {
 
-	constexpr int BUFFER_SIZE = 10;
+	speedCheck();
 
-	CRingBuffer ringBuffer(BUFFER_SIZE);
-
-	const BYTE* str = (const BYTE*)"HelloWorld";
-	const BYTE* str2 = (const BYTE*)"World";
-
-	int strLen = strlen((const char*)str);
-	int str2Len = strlen((const char*)str2);
-
-
-	BYTE* res = (BYTE*)malloc(sizeof(BYTE) * (BUFFER_SIZE + 1));
-	ZeroMemory(res, BUFFER_SIZE + 1);
-
-	ringBuffer.push(str2Len, str2);
-	ringBuffer.front(str2Len, res);
-	ringBuffer.pop(str2Len);
-	printf("%s\n", res);
-
-	ringBuffer.push(strLen, str);
-	ringBuffer.front(strLen, res);
-	ringBuffer.pop(strLen);
-	printf("%s\n", res);
-
-	ringBuffer.push(strLen, str);
-	ringBuffer.front(strLen, res);
-	ringBuffer.pop(strLen);
-	printf("%s\n", res);
-
-	ringBuffer.push(strLen, str);
-	ringBuffer.front(strLen, res);
-	ringBuffer.pop(strLen);
-	printf("%s\n", res);
-
-	ringBuffer.push(strLen, str);
-	ringBuffer.front(strLen, res);
-	ringBuffer.pop(strLen);
-	printf("%s\n", res);
-
-	ringBuffer.push(strLen, str);
-	ringBuffer.front(strLen, res);
-	ringBuffer.pop(strLen);
-	printf("%s\n", res);
 	return 0;
 }

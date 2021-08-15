@@ -11,10 +11,6 @@ public:
 	bool pop(UINT size);
 	bool front(UINT size, BYTE* buffer);
 
-	inline int size() {
-		return _size;
-	}
-
 	inline int capacity() {
 		return _capacity;
 	}
@@ -27,12 +23,14 @@ public:
 		return _front;
 	}
 
+	void getUsedSize(UINT* size); 
+	void getFreeSize(UINT* size);
+
 private:
 
 	BYTE* _buffer;
+	UINT _capacity;
 	UINT _rear;
 	UINT _front;
-	UINT _size;
-	UINT _capacity;
 
 };
