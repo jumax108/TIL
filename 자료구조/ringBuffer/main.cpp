@@ -20,7 +20,7 @@ void unitTest() {
 	BYTE out[50] = {0,};
 
 	BYTE* strTemp = a;
-
+	 
 	int leftChar = 18;
 
 	for (;;) {
@@ -102,7 +102,7 @@ void speedCheck() {
 
 int main() {
 
-	speedCheck();
+	unitTest();
 
 	return 0;
 }

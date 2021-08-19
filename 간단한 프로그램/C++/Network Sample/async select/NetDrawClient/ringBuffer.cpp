@@ -29,19 +29,23 @@ bool CRingBuffer::push(UINT size, const BYTE *buffer) {
 		return false;
 	}
 
+	UINT rearTemp = _rear;
+
 	do{
 		
-		int destBufferIndex = (_rear + size);
+		int destBufferIndex = (rearTemp + size);
 		if (destBufferIndex >= _capacity + 1) {
 			destBufferIndex = _capacity + 1;
 		}
-		int copySize = destBufferIndex - _rear;
-		memcpy(&_buffer[_rear], buffer, copySize);
+		int copySize = destBufferIndex - rearTemp;
+		memcpy(&_buffer[rearTemp], buffer, copySize);
+		rearTemp = (rearTemp + copySize) % (_capacity + 1);
 		buffer += copySize;
-		_rear = (_rear + copySize) % (_capacity + 1);
 		size -= copySize;
 
 	} while (size > 0);
+
+	_rear = (_rear + size) % (_capacity + 1);
 
 	return true;
 
@@ -55,19 +59,7 @@ bool CRingBuffer::pop(UINT size) {
 		return false;
 	}
 
-	int copySize = 0;
-
-	do {
-
-		int destBufferIndex = (_front + size);
-		if (destBufferIndex >= _capacity + 1) {
-			destBufferIndex = _capacity + 1;
-		}
-		copySize = destBufferIndex - _front;
-		_front = (_front + copySize) % (_capacity + 1);
-		size -= copySize;
-
-	} while (size > 0);
+	_front = (_front + size) % (_capacity + 1);
 
 	return true;
 }

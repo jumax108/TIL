@@ -22,7 +22,7 @@ bool networkInit(HWND hWnd);
 void socketProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void sendPacket();
 
-const WCHAR* SERVER_IP = L"127.0.0.1";
+const WCHAR* SERVER_IP = L"192.168.30.13";
 constexpr USHORT SERVER_PORT = 25000;
 constexpr USHORT SENDBUF_SIZE = 3000;
 constexpr USHORT RECVBUF_SIZE = 3000;
