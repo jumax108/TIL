@@ -278,8 +278,10 @@ void sendBroadcast(stPlayer* exceptPlayer, BYTE* msg, UINT msgSize) {
 }
 
 void packetProcess(stPlayer* player) {
-	printf("%d\n", player->recvBuf.size());
-	while (player->recvBuf.size() >= sizeof(stMsgHeader)) {
+	UINT recvBufSize;
+	player->recvBuf.getUsedSize(&recvBufSize);
+	printf("%d\n", recvBufSize);
+	while (recvBufSize >= sizeof(stMsgHeader)) {
 
 		stMsgHeader head;
 		bool frontResult;
@@ -290,8 +292,10 @@ void packetProcess(stPlayer* player) {
 		// 현재 메시지 내용이 무조건 8바이트임
 		constexpr int msgBodySize = 8;
 		BYTE msgBody[msgBodySize];
-		int playerRecvBufSize = playerRecvBuf->size();
-		int leftRecvBufSize = RECV_BUF_SIZE - playerRecvBufSize;
+		UINT playerRecvBufSize;
+		playerRecvBuf->getUsedSize(&playerRecvBufSize);
+		UINT leftRecvBufSize;
+		playerRecvBuf->getFreeSize(&leftRecvBufSize);
 
 		if (leftRecvBufSize < msgBodySize) {
 			playerRecvBuf->front(leftRecvBufSize, msgBody);
@@ -326,6 +330,7 @@ void packetProcess(stPlayer* player) {
 			break;
 		}
 
+		player->recvBuf.getUsedSize(&recvBufSize);
 	}
 
 }
@@ -379,7 +384,8 @@ bool networkRecv() {
 				continue;
 			}
 
-			int playerRecvBufSize = player->recvBuf.size();
+			UINT playerRecvBufSize;
+			player->recvBuf.getUsedSize(&playerRecvBufSize);
 			bufSize = RECV_BUF_SIZE - playerRecvBufSize;
 
 			int recvResult;
@@ -413,7 +419,9 @@ void networkSend() {
 	stPlayer* playerEnd = playerStart + MAX_PLAYER_NUM;
 
 	for (player = playerStart; player != playerEnd; ++player) {
-		if (player->id == 0 || player->sendBuf.size() == 0) {
+		UINT sendBufSize;
+		player->sendBuf.getUsedSize(&sendBufSize);
+		if (player->id == 0 || sendBufSize == 0) {
 			continue;
 		}
 		FD_SET(player->sock, &writeSet);
@@ -439,7 +447,8 @@ void networkSend() {
 			if (FD_ISSET(player->sock, &writeSet) != 0) {
 
 				CRingBuffer* sendBuf = &player->sendBuf;
-				int bufSize = sendBuf->size();
+				UINT bufSize;
+				sendBuf->getUsedSize(&bufSize);
 
 				char* buf = (char*)malloc(bufSize);
 

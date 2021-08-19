@@ -4,7 +4,6 @@ class CRingBuffer {
 
 public:
 
-	CRingBuffer() {}
 	CRingBuffer(UINT capacity);
 	~CRingBuffer();
 
