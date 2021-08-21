@@ -102,7 +102,7 @@ void speedCheck() {
 
 int main() {
 
-	unitTest();
+	speedCheck();
 
 	return 0;
 }

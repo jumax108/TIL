@@ -8,8 +8,8 @@
 
 CRingBuffer::CRingBuffer(UINT capacity) {
 	_capacity = capacity;
-	_buffer = (BYTE*)malloc(sizeof(BYTE) * (capacity + 1));
-	ZeroMemory(_buffer, sizeof(BYTE) * (capacity + 1));
+	_buffer = (BYTE*)malloc(capacity + 1);
+	ZeroMemory(_buffer, capacity + 1);
 	memset(_buffer, 0x7f, capacity + 1);
 	_rear = 0;
 	_front = 0;
