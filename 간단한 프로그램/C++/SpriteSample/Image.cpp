@@ -47,12 +47,12 @@ CImage::~CImage() {
 	free(_buf);
 }
 
-void CImage::draw(int x, int y) {
+void CImage::draw(int x, int y, float widthRatio) {
 
 
 	x -= _centerX;
 	y -= _centerY;
-	int srcWidth = _infoHeader->biWidth;
+	int srcWidth = _infoHeader->biWidth * widthRatio;
 	int srcHeight = _infoHeader->biHeight;
 	BYTE* srcBuf = _buf;
 

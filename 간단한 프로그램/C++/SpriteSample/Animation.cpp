@@ -16,6 +16,7 @@ CAnimation::CAnimation(int imageNum) {
 	_currentDelayFrame = 0;
 
 	_doneSingleTime = false;
+	_playOnce = false;
 }
 
 CAnimation::~CAnimation() {
@@ -29,14 +30,19 @@ CAnimation::~CAnimation() {
 }
 
 void CAnimation::update() {
-	
+
 	_currentDelayFrame += 1;
 
 	if (_currentDelayFrame >= _delayFrameNum[_currentImageIndex]) {
 		_currentDelayFrame = 0;
 		_currentImageIndex += 1;
 		if (_currentImageIndex >= _imageNum) {
-			_currentImageIndex = 0;
+			if (_playOnce == true) {
+				_currentImageIndex = _imageNum - 1;
+			}
+			else {
+				_currentImageIndex = 0;
+			}
 			_doneSingleTime = true;
 		}
 	}

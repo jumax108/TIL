@@ -19,3 +19,7 @@
 #include <io.h>
 #include <fcntl.h>
 #include <timeapi.h>
+#include <time.h>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#pragma comment(lib, "ws2_32")
