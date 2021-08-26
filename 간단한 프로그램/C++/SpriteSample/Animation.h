@@ -11,7 +11,7 @@ public:
 	~CAnimation();
 
 	void update();
-	void draw(int x, int y);
+	void draw(int x, int y, float redRatio = 1, float blueRatio = 1, float greenRatio = 1);
 
 	void loadImage(DWORD index, const WCHAR* fileName, DWORD delayFrame, int centerX, int centerY, DWORD alphaColor);
 

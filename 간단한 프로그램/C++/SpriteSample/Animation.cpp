@@ -49,9 +49,9 @@ void CAnimation::update() {
 
 }
 
-void CAnimation::draw(int x, int y) {
+void CAnimation::draw(int x, int y, float redRatio, float blueRatio, float greenRatio) {
 
-	_images[_currentImageIndex].draw(x, y);
+	_images[_currentImageIndex].draw(x, y, 1, redRatio, blueRatio, greenRatio);
 
 }
 

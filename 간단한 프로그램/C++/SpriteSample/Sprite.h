@@ -25,7 +25,7 @@ public:
 	CSprite(CSpriteData* aniData, void (*updateFunc)(CSprite* sprite, void* argv));
 
 	void update(void* argv);
-	void draw();
+	void draw(float redRatio = 1, float blueRatio = 1, float greenRatio = 1);
 
 	void create(int x, int y);
 	void die();

@@ -59,7 +59,7 @@ void CSprite::create(int x, int y) {
 
 }
 
-void CSprite::draw() {
+void CSprite::draw(float redRatio, float blueRatio, float greenRatio) {
 	if (_shadow != nullptr) {
 		_shadow->draw(_x, _y);
 	}
@@ -69,7 +69,7 @@ void CSprite::draw() {
 	if (_effect._doneSingleTime == false) {
 		_effect.draw(_x, _y);
 	}
-	(*_aniData)[_currentAnimationIndex + (int)_seeRight]->draw(_x, _y);
+	(*_aniData)[_currentAnimationIndex + (int)_seeRight]->draw(_x, _y, redRatio, blueRatio, greenRatio);
 
 
 }

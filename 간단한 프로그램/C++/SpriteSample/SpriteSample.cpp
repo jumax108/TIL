@@ -50,7 +50,12 @@ int renderCnt = 0;
 SOCKET sock;
 
 WCHAR logicFrame[100] = { 0, };
-WCHAR renderFrame[100] = { 0, };
+WCHAR renderFrame[100] = { 0, }; 
+
+CRingBuffer recvBuffer;
+CRingBuffer sendBuffer;
+
+bool ableSendPacket;
 void otherUserUpdate(CSprite* sprite, void* argv) {
 
     int userCurAniIdx = sprite->_currentAnimationIndex;
@@ -273,6 +278,12 @@ void userUpdate(CSprite* sprite, void* argv) {
         }
     } while (false);
     sprite->_oldMsg = sprite->_msg;
+
+    if (sprite->_nowHp <= 0) {
+
+        sprite->_isLive = false;
+
+    }
 }
 
 void update() {
@@ -324,7 +335,12 @@ void render(HWND hWnd) {
 
     for (int userCnt = 0; userCnt < 50; userCnt++) {
         if (user[userCnt]->isLive() == true) {
-            user[userCnt]->draw();
+            if (user[userCnt] == mySprite) {
+                user[userCnt]->draw(2,1,1);
+            }
+            else {
+                user[userCnt]->draw();
+            }
         }
     }
     CScreenDib::getInstance()->flip(hWnd);
@@ -679,7 +695,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     AdjustWindowRectEx(&rt, GetWindowStyle(hWnd), GetMenu(hWnd) != NULL, GetWindowExStyle(hWnd));
 
-    MoveWindow(hWnd, 0, 0, rt.right, rt.bottom, false);
+    MoveWindow(hWnd, 0, 0, rt.right - rt.left, rt.bottom - rt.top, false);
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
@@ -801,13 +817,15 @@ int rpcMoveStart(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
     payload->x = x;
     payload->y = y;
 
-    int sendResult = send(sock, buf, packetSize, 0);
-    int sendError;
-    if (sendResult == SOCKET_ERROR) {
+    //int sendResult = send(sock, buf, packetSize, 0);
+    
+    sendBuffer.push(packetSize, (BYTE*)buf);
+    if (ableSendPacket == true) {
 
-        errorOutputFunc(L"sendError", &sendError);
+        ableSendPacket = sendPacket();
 
     }
+
     return 0;
 
 }
@@ -830,11 +848,10 @@ int rpcMoveStop(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
     payload->y = y;
 
 
-    int sendResult = send(sock, buf, packetSize, 0);
-    int sendError;
-    if (sendResult == SOCKET_ERROR) {
+    sendBuffer.push(packetSize, (BYTE*)buf);
+    if (ableSendPacket == true) {
 
-        errorOutputFunc(L"sendError", &sendError);
+        ableSendPacket = sendPacket();
 
     }
     return 0;
@@ -858,7 +875,13 @@ int rpcAttack1(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
     payload->x = x;
     payload->y = y;
 
-    return send(sock, buf, packetSize, 0);
+    sendBuffer.push(packetSize, (BYTE*)buf);
+    if (ableSendPacket == true) {
+
+        ableSendPacket = sendPacket();
+
+    }
+    return 0;
 }
 
 int rpcAttack2(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
@@ -878,7 +901,13 @@ int rpcAttack2(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
     payload->x = x;
     payload->y = y;
 
-    return send(sock, buf, packetSize, 0);
+    sendBuffer.push(packetSize, (BYTE*)buf);
+    if (ableSendPacket == true) {
+
+        ableSendPacket = sendPacket();
+
+    }
+    return 0;
 }
 
 int rpcAttack3(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
@@ -898,7 +927,13 @@ int rpcAttack3(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
     payload->x = x;
     payload->y = y;
 
-    return send(sock, buf, packetSize, 0);
+    sendBuffer.push(packetSize, (BYTE*)buf);
+    if (ableSendPacket == true) {
+
+        ableSendPacket = sendPacket();
+
+    }
+    return 0;
 }
 
 

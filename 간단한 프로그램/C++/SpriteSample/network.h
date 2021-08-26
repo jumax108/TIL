@@ -11,10 +11,10 @@ static const WCHAR* SERVER_IP = L"172.30.1.16";
 static const USHORT SERVER_PORT = 5000;
 
 constexpr UINT NETWORK_BUFFER_SIZE = 5000;
-static CRingBuffer recvBuffer;
-static CRingBuffer sendBuffer;
+extern CRingBuffer recvBuffer;
+extern CRingBuffer sendBuffer;
 
-static bool ableSendPacket;
+extern bool ableSendPacket;
 
 void printWsaErrorW(const WCHAR* errorMsg, int* errorCode, const WCHAR* file, int line);
 void msgBoxWsaErrorW(const WCHAR* errorMsg, int* errorCode, const WCHAR* file, int line);

@@ -8,7 +8,7 @@ class CImage {
 public:
 	CImage(const WCHAR* fileName, int centerX, int centerY, DWORD alphaColor);
 
-	void draw(int x, int y, float widthRatio = 1.0f);
+	void draw(int x, int y, float widthRatio = 1.0f, float redRatio = 1, float blueRatio = 1, float greenRatio = 1);
 
 	~CImage();
 

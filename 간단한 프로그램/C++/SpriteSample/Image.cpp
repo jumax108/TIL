@@ -47,7 +47,7 @@ CImage::~CImage() {
 	free(_buf);
 }
 
-void CImage::draw(int x, int y, float widthRatio) {
+void CImage::draw(int x, int y, float widthRatio, float redRatio, float blueRatio, float greenRatio) {
 
 
 	x -= _centerX;
@@ -104,9 +104,9 @@ void CImage::draw(int x, int y, float widthRatio) {
 				BYTE* destB = destBufLine + 1;
 				BYTE* destR = destBufLine + 2;
 
-				*destG = *srcG;
-				*destB = *srcB;
-				*destR = *srcR;
+				*destG = min(*srcG * greenRatio, 255);
+				*destB = min(*srcB * blueRatio,255);
+				*destR = min(*srcR * redRatio,255);
 
 			}
 
