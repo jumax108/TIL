@@ -1,4 +1,4 @@
-#pragma pack(1)
+pragma pack(1)
 struct stHeader{
 	char code;
 	char payloadSize;
@@ -81,7 +81,7 @@ struct stSC_Damage{
 	int damageId;
 	char damageHp;
 };
-#pragma pack()
+pragma pack(0)
 constexpr unsigned int SC_CreateMyCharacter = 0;
 constexpr unsigned int SC_OtherMyCharacter = 1;
 constexpr unsigned int SC_DeleteCharacter = 2;
@@ -89,10 +89,10 @@ constexpr unsigned int CS_MoveStart = 10;
 constexpr unsigned int SC_MoveStart = 11;
 constexpr unsigned int CS_MoveStop = 12;
 constexpr unsigned int SC_MoveStop = 13;
-constexpr unsigned int CS_Attack1 = 14;
-constexpr unsigned int SC_Attack1 = 20;
-constexpr unsigned int CS_Attack2 = 21;
-constexpr unsigned int SC_Attack2 = 22;
-constexpr unsigned int CS_Attack3 = 23;
-constexpr unsigned int SC_Attack3 = 24;
+constexpr unsigned int CS_Attack1 = 20;
+constexpr unsigned int SC_Attack1 = 21;
+constexpr unsigned int CS_Attack2 = 22;
+constexpr unsigned int SC_Attack2 = 23;
+constexpr unsigned int CS_Attack3 = 24;
+constexpr unsigned int SC_Attack3 = 25;
 constexpr unsigned int SC_Damage = 30;

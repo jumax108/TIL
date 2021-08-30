@@ -22,20 +22,17 @@ void CLetsRPC::process(const wchar_t* fileName) {
 
 	splitData();
 
-	_wfopen_s(&commonFile, L"common.h", L"w");
+	_wfopen_s(&commonFile, L"output\\common.h", L"w");
 	makeStruct();	  // common.h
 	makeConstVal();   // common.h
 	fclose(commonFile);
 	
-	_wfopen_s(&recvFile, L"recv.h", L"w");
+	_wfopen_s(&recvFile, L"output\\recv.h", L"w");
 	makeProxyClass(); // recv.h
-	makePacketProc(); // recv.h
-	makeRecvProc();
 	fclose(recvFile);
 
-	_wfopen_s(&sendFile, L"send.h", L"w");
+	_wfopen_s(&sendFile, L"output\\send.h", L"w");
 	makeStubClass();  // send.h
-	//makeSendProc();
 	fclose(sendFile);
 
 	delete(_parser);
@@ -105,9 +102,11 @@ void CLetsRPC::splitData() {
 
 void CLetsRPC::makeStruct() {
 
+	fwprintf(commonFile, L"pragma pack(1)\n");
 	fwprintf(commonFile, L"struct stHeader{\n");
-	fwprintf(commonFile, L"\tunsigned int payloadType;\n");
-	fwprintf(commonFile, L"\tunsigned int payloadSize;\n");
+	fwprintf(commonFile, L"\tchar code;\n");
+	fwprintf(commonFile, L"\tchar payloadSize;\n");
+	fwprintf(commonFile, L"\tchar payloadType;\n");
 	fwprintf(commonFile, L"};\n");
 
 
@@ -124,13 +123,15 @@ void CLetsRPC::makeStruct() {
 		fwprintf(commonFile, L"};\n");
 	}
 
+	fwprintf(commonFile, L"pragma pack(0)\n");
 }
 
 void CLetsRPC::makeProxyClass() {
 
-	fwprintf(recvFile, L"class CProxyFunc{\n");
+	fwprintf(recvFile, L"class CProxyFuncBase{\n");
+	fwprintf(recvFile, L"public:\n");
 	for (linkedList<stFunc*>::iterator funcIter = _func->begin(); funcIter != _func->end(); ++funcIter) {
-		fwprintf(recvFile, L"\tvirtual bool %s(", (*funcIter)->funcName);
+		fwprintf(recvFile, L"\tvirtual bool %sProxy(", (*funcIter)->funcName);
 		linkedList<stArgu*>* argu = (*funcIter)->argu;
 		for (linkedList<stArgu*>::iterator arguIter = argu->begin(); arguIter != argu->end(); ++arguIter) {
 			if (arguIter != argu->begin()) {
@@ -144,15 +145,18 @@ void CLetsRPC::makeProxyClass() {
 		}
 		fwprintf(recvFile, L"){ return false; }\n");
 	}
+	makePacketProc(); // recv.h
 	fwprintf(recvFile, L"};\n");
 
 }
 
 void CLetsRPC::makeStubClass() {
 
+	fwprintf(sendFile, L"class CNetwork;\n");
+	fwprintf(sendFile, L"extern CNetwork* network;\n");
 	fwprintf(sendFile, L"class CStubFunc{\n");
 	for (linkedList<stFunc*>::iterator funcIter = _func->begin(); funcIter != _func->end(); ++funcIter) {
-		fwprintf(sendFile, L"\tvirtual bool %s(CRingBuffer* sendBuffer", (*funcIter)->funcName);
+		fwprintf(sendFile, L"\tvirtual bool %sStub(CRingBuffer* sendBuffer", (*funcIter)->funcName);
 		linkedList<stArgu*>* argu = (*funcIter)->argu;
 		for (linkedList<stArgu*>::iterator arguIter = argu->begin(); arguIter != argu->end(); ++arguIter) {
 			fwprintf(sendFile, L", ");
@@ -164,11 +168,17 @@ void CLetsRPC::makeStubClass() {
 		}
 		fwprintf(sendFile, L")\n");
 		fwprintf(sendFile, L"\t{\n");
-		fwprintf(sendFile, L"\t\tCProtocolBuffer packet;\n");
+		fwprintf(sendFile, L"\t\tCProtocolBuffer packet(50);\n");
+		fwprintf(sendFile, L"\t\tpacket<<(char)0x89;\n");
+		fwprintf(sendFile, L"\t\tpacket<<(char)sizeof(st%s);\n",(*funcIter)->funcName);
+		fwprintf(sendFile, L"\t\tpacket<<(char)%s;\n",(*funcIter)->funcName);
 		for (linkedList<stArgu*>::iterator arguIter = argu->begin(); arguIter != argu->end(); ++arguIter) {
 			fwprintf(sendFile, L"\t\tpacket << %s;\n", (*arguIter)->valName);
 		}
-		fwprintf(sendFile, L"\t\tsendBuffer->push((char*)&packet);\n");
+		fwprintf(sendFile, L"\t\tsendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());\n");
+		fwprintf(sendFile, L"\t\tif(network->ableSendPacket == true){\n");
+		fwprintf(sendFile, L"\t\t\tnetwork->sendPacket();\n");
+		fwprintf(sendFile, L"\t\t}\n");
 		fwprintf(sendFile, L"\t}\n");
 	}
 	fwprintf(sendFile, L"};\n");
@@ -184,22 +194,21 @@ void CLetsRPC::makeConstVal() {
 
 void CLetsRPC::makePacketProc() {
 
-	fwprintf(recvFile, L"CProxyFunc* proxyFunc = new CProxyFunc();\n");
-	fwprintf(recvFile, L"void packetProc(stHeader* header, CProtocolBuffer* payload){\n");
-	fwprintf(recvFile, L"\tswitch(header->payloadType){\n");
+	fwprintf(recvFile, L"\tvoid packetProc(stHeader* header, CProtocolBuffer* payload, CProxyFuncBase* proxy){\n");
+	fwprintf(recvFile, L"\t\tswitch(header->payloadType){\n");
 	for (linkedList<stFunc*>::iterator funcIter = _func->begin(); funcIter != _func->end(); ++funcIter) {
-		fwprintf(recvFile, L"\t\tcase %s:\n", (*funcIter)->funcName);
-		fwprintf(recvFile, L"\t\t{\n");
+		fwprintf(recvFile, L"\t\t\tcase %s:\n", (*funcIter)->funcName);
+		fwprintf(recvFile, L"\t\t\t{\n");
 		linkedList<stArgu*>* arguList = (*funcIter)->argu;
 		for (linkedList<stArgu*>::iterator arguIter = arguList->begin(); arguIter != arguList->end(); ++arguIter) {
-			fwprintf(recvFile, L"\t\t\t");
+			fwprintf(recvFile, L"\t\t\t\t");
 			if ((*arguIter)->isSigned == false) {
 				fwprintf(recvFile, L"unsigned ");
 			}
 			fwprintf(recvFile, L"%s %s;\n", (*arguIter)->typeName, (*arguIter)->valName);
-			fwprintf(recvFile, L"\t\t\t*payload >> %s;\n", (*arguIter)->valName);
+			fwprintf(recvFile, L"\t\t\t\t*payload >> %s;\n", (*arguIter)->valName);
 		}
-		fwprintf(recvFile, L"\t\t\tproxyFunc->%s(", (*funcIter)->funcName);
+		fwprintf(recvFile, L"\t\t\t\tproxy->%sProxy(", (*funcIter)->funcName);
 		for (linkedList<stArgu*>::iterator arguIter = arguList->begin(); arguIter != arguList->end(); ++arguIter) {
 			if (arguIter != arguList->begin()) {
 				fwprintf(recvFile, L", ");
@@ -207,11 +216,11 @@ void CLetsRPC::makePacketProc() {
 			fwprintf(recvFile, L"%s", (*arguIter)->valName);
 		}
 		fwprintf(recvFile, L");\n");
-		fwprintf(recvFile, L"\t\t}\n");
-		fwprintf(recvFile, L"\t\tbreak;\n");
+		fwprintf(recvFile, L"\t\t\t}\n");
+		fwprintf(recvFile, L"\t\t\tbreak;\n");
 	}
+	fwprintf(recvFile, L"\t\t}\n");
 	fwprintf(recvFile, L"\t}\n");
-	fwprintf(recvFile, L"}\n");
 
 }
 

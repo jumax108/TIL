@@ -7,8 +7,8 @@ CS_MoveStart(char direction, short x, short y);
 SC_MoveStart(int id, char direction, short x, short y);
 CS_MoveStop(char direction, short x, short y);
 SC_MoveStop(int id, char direction, short x, short y);
-CS_Attack1(char direction, short x, short y);
 [num] = 20
+CS_Attack1(char direction, short x, short y);
 SC_Attack1(int id, char direction, short x, short y);
 CS_Attack2(char direction, short x, short y);
 SC_Attack2(int id, char direction, short x, short y);
