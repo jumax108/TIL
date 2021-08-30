@@ -1,0 +1,18 @@
+[num] = 0
+SC_CreateMyCharacter(int id, char direction, short x, short y, char hp);
+SC_OtherMyCharacter(int id, char direction, short x, short y, char hp);
+SC_DeleteCharacter(int id);
+[num] = 10
+CS_MoveStart(char direction, short x, short y);
+SC_MoveStart(int id, char direction, short x, short y);
+CS_MoveStop(char direction, short x, short y);
+SC_MoveStop(int id, char direction, short x, short y);
+CS_Attack1(char direction, short x, short y);
+[num] = 20
+SC_Attack1(int id, char direction, short x, short y);
+CS_Attack2(char direction, short x, short y);
+SC_Attack2(int id, char direction, short x, short y);
+CS_Attack3(char direction, short x, short y);
+SC_Attack3(int id, char direction, short x, short y);
+[num] = 30
+SC_Damage(int attackId, int damageId, char damageHp);

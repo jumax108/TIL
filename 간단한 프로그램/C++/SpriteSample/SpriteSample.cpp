@@ -12,6 +12,10 @@
 #include "networkMessage.h"
 #include "network.h"
 #include "queue.h"
+#include "protocolBuffer.h"
+#include "common.h"
+#include "send.h"
+#include "recv.h"
 
 #define MIN(a,b) a>b?b:a
 #define MAX(a,b) a>b?a:b
@@ -34,7 +38,7 @@ BYTE* backgroundBuf;
 CSpriteData* spriteData;
 CSprite* user[50];
 CSprite* mySprite;
-CQueue<USHORT> userIndex(50);
+CQueue<USHORT>* userIndex;
 
 CImage* _shadow;
 CImage* _hpBar;
@@ -47,15 +51,14 @@ LARGE_INTEGER freq;
 int logicCnt = 0;
 int renderCnt = 0;
 
-SOCKET sock;
-
 WCHAR logicFrame[100] = { 0, };
 WCHAR renderFrame[100] = { 0, }; 
 
-CRingBuffer recvBuffer;
-CRingBuffer sendBuffer;
+CNetwork* network;
 
-bool ableSendPacket;
+CProxyFuncBase* proxy;
+CStubFunc* stub;
+
 void otherUserUpdate(CSprite* sprite, void* argv) {
 
     int userCurAniIdx = sprite->_currentAnimationIndex;
@@ -175,7 +178,8 @@ void userUpdate(CSprite* sprite, void* argv) {
                 sprite->_y += 2;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_DD, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_DD, sprite->_x, sprite->_y);
+                //network->send_MOVE_START((BYTE)INPUT_MESSAGE::MOVE_DD, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::MOVE_LD:
@@ -186,7 +190,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             sprite->_seeRight = false;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_LD, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_LD, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::MOVE_LL:
@@ -195,7 +199,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             sprite->_seeRight = false;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_LL, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_LL, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::MOVE_LU:
@@ -206,7 +210,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             sprite->_seeRight = false;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_LU, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_LU, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::MOVE_RD:
@@ -217,7 +221,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             sprite->_seeRight = true;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_RD, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_RD, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::MOVE_RR:
@@ -226,7 +230,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             sprite->_seeRight = true;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_RR, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_RR, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::MOVE_RU:
@@ -237,7 +241,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             sprite->_seeRight = true;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_RU, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_RU, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::MOVE_UU:
@@ -245,35 +249,33 @@ void userUpdate(CSprite* sprite, void* argv) {
                 sprite->_y -= 2;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
-                rpcMoveStart(sock, (BYTE)INPUT_MESSAGE::MOVE_UU, sprite->_x, sprite->_y);
+                stub->CS_MoveStartStub(&network->sendBuffer, (char)INPUT_MESSAGE::MOVE_UU, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::NONE:
             if (userCurAniIdx != 0) {
                 sprite->setAnimation(0);
-                if(userCurAniIdx < 4)
-                    rpcMoveStop(sock, sprite->_seeRight * 4, sprite->_x, sprite->_y);
+                if (userCurAniIdx < 4)
+                    stub->CS_MoveStopStub(&network->sendBuffer, sprite->_seeRight * 4, sprite->_x, sprite->_y);
             }
             break;
         case INPUT_MESSAGE::ATTACK1:
             sprite->setAnimation(4);
             if(userCurAniIdx < 4)
-                rpcMoveStop(sock, sprite->_seeRight * 4, sprite->_x, sprite->_y);
-            rpcAttack1(sock, sprite->_seeRight * 4, sprite->_x, sprite->_y);
+                stub->CS_MoveStopStub(&network->sendBuffer, sprite->_seeRight * 4, sprite->_x, sprite->_y);
+            stub->CS_Attack1Stub(&network->sendBuffer, sprite->_seeRight * 4, sprite->_x, sprite->_y);
             break;
         case INPUT_MESSAGE::ATTACK2:
             sprite->setAnimation(6);
             if (userCurAniIdx < 4)
-                rpcMoveStop(sock, sprite->_seeRight * 4, sprite->_x, sprite->_y);
-            rpcAttack2(sock, sprite->_seeRight * 4, sprite->_x, sprite->_y);
-
+                stub->CS_MoveStopStub(&network->sendBuffer, sprite->_seeRight * 4, sprite->_x, sprite->_y);
+            stub->CS_Attack2Stub(&network->sendBuffer, sprite->_seeRight * 4, sprite->_x, sprite->_y);
             break;
         case INPUT_MESSAGE::ATTACK3:
             sprite->setAnimation(8);
             if (userCurAniIdx < 4)
-                rpcMoveStop(sock, sprite->_seeRight * 4, sprite->_x, sprite->_y);
-            rpcAttack3(sock, sprite->_seeRight * 4, sprite->_x, sprite->_y);
-
+                stub->CS_MoveStopStub(&network->sendBuffer, sprite->_seeRight * 4, sprite->_x, sprite->_y);
+            stub->CS_Attack3Stub(&network->sendBuffer, sprite->_seeRight * 4, sprite->_x, sprite->_y);
             break;
         }
     } while (false);
@@ -281,7 +283,7 @@ void userUpdate(CSprite* sprite, void* argv) {
 
     if (sprite->_nowHp <= 0) {
 
-        sprite->_isLive = false;
+        //sprite->_isLive = false;
 
     }
 }
@@ -608,10 +610,16 @@ void init(HWND hWnd) {
     user->_shadow = _shadow;
     */
 
+    userIndex = new CQueue<USHORT>(50);
     for (USHORT userCnt = 0; userCnt < 50; userCnt++) {
-        userIndex.push(userCnt);
+        userIndex->push(userCnt);
         user[userCnt] = new CSprite();
     }
+
+    proxy = new CProxyFunc();
+    stub = new CStubFunc();
+
+    network = new CNetwork();
 
     return;
 }
@@ -624,7 +632,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE: 
         {
-            bool networkInitResult = networkInit(hWnd);
+            init(hWnd);
+            bool networkInitResult = network->networkInit(hWnd);
             if (networkInitResult == false) {
                 PostQuitMessage(0);
             }
@@ -644,7 +653,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case UM_SOCKET:
-        socketMessageProc(hWnd, message, wParam, lParam);
+        network->socketMessageProc(hWnd, message, wParam, lParam);
         break;
 
     default:
@@ -700,7 +709,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
-    init(hWnd);
 
     MSG msg;
 
@@ -799,333 +807,3 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-
-int rpcMoveStart(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
-
-    using paylaodStruct = stCS_MOVE_START;
-
-    constexpr int packetSize = sizeof(stPacketHeader) + sizeof(paylaodStruct);
-    char* buf = (char*)malloc(packetSize);
-
-    stPacketHeader* header = (stPacketHeader*)buf;
-    header->code = 0x89;
-    header->size = sizeof(paylaodStruct);
-    header->type = CS_MOVE_START;
-
-    paylaodStruct* payload = (paylaodStruct*)(buf + sizeof(stPacketHeader));
-    payload->direction = direction;
-    payload->x = x;
-    payload->y = y;
-
-    //int sendResult = send(sock, buf, packetSize, 0);
-    
-    sendBuffer.push(packetSize, (BYTE*)buf);
-    if (ableSendPacket == true) {
-
-        ableSendPacket = sendPacket();
-
-    }
-
-    return 0;
-
-}
-
-int rpcMoveStop(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
-
-    using paylaodStruct = stCS_MOVE_STOP;
-
-    constexpr int packetSize = sizeof(stPacketHeader) + sizeof(paylaodStruct);
-    char* buf = (char*)malloc(packetSize);
-
-    stPacketHeader* header = (stPacketHeader*)buf;
-    header->code = 0x89;
-    header->size = sizeof(paylaodStruct);
-    header->type = CS_MOVE_STOP;
-
-    paylaodStruct* payload = (paylaodStruct*)(buf + sizeof(stPacketHeader));
-    payload->direction = direction;
-    payload->x = x;
-    payload->y = y;
-
-
-    sendBuffer.push(packetSize, (BYTE*)buf);
-    if (ableSendPacket == true) {
-
-        ableSendPacket = sendPacket();
-
-    }
-    return 0;
-
-}
-
-int rpcAttack1(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
-
-    using paylaodStruct = stCS_ATTACK1;
-
-    constexpr int packetSize = sizeof(stPacketHeader) + sizeof(paylaodStruct);
-    char* buf = (char*)malloc(packetSize);
-
-    stPacketHeader* header = (stPacketHeader*)buf;
-    header->code = 0x89;
-    header->size = sizeof(paylaodStruct);
-    header->type = CS_ATTACK1;
-
-    paylaodStruct* payload = (paylaodStruct*)(buf + sizeof(stPacketHeader));
-    payload->direction = direction;
-    payload->x = x;
-    payload->y = y;
-
-    sendBuffer.push(packetSize, (BYTE*)buf);
-    if (ableSendPacket == true) {
-
-        ableSendPacket = sendPacket();
-
-    }
-    return 0;
-}
-
-int rpcAttack2(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
-
-    using paylaodStruct = stCS_ATTACK2;
-
-    constexpr int packetSize = sizeof(stPacketHeader) + sizeof(paylaodStruct);
-    char* buf = (char*)malloc(packetSize);
-
-    stPacketHeader* header = (stPacketHeader*)buf;
-    header->code = 0x89;
-    header->size = sizeof(paylaodStruct);
-    header->type = CS_ATTACK2;
-
-    paylaodStruct* payload = (paylaodStruct*)(buf + sizeof(stPacketHeader));
-    payload->direction = direction;
-    payload->x = x;
-    payload->y = y;
-
-    sendBuffer.push(packetSize, (BYTE*)buf);
-    if (ableSendPacket == true) {
-
-        ableSendPacket = sendPacket();
-
-    }
-    return 0;
-}
-
-int rpcAttack3(SOCKET sock, BYTE direction, USHORT x, USHORT y) {
-
-    using paylaodStruct = stCS_ATTACK3;
-
-    constexpr int packetSize = sizeof(stPacketHeader) + sizeof(paylaodStruct);
-    char* buf = (char*)malloc(packetSize);
-
-    stPacketHeader* header = (stPacketHeader*)buf;
-    header->code = 0x89;
-    header->size = sizeof(paylaodStruct);
-    header->type = CS_ATTACK3;
-
-    paylaodStruct* payload = (paylaodStruct*)(buf + sizeof(stPacketHeader));
-    payload->direction = direction;
-    payload->x = x;
-    payload->y = y;
-
-    sendBuffer.push(packetSize, (BYTE*)buf);
-    if (ableSendPacket == true) {
-
-        ableSendPacket = sendPacket();
-
-    }
-    return 0;
-}
-
-
-void createMyCharacter(char* buf) {
-
-    stSC_CREATE_MY_CHARACTER* packet = (stSC_CREATE_MY_CHARACTER*)buf;
-    
-    USHORT idx;
-    userIndex.front(&idx);
-
-    CSprite* newUser = user[idx];
-    new (newUser) CSprite(spriteData, userUpdate);
-    newUser->_x = packet->x;
-    newUser->_y = packet->y;
-    newUser->_nowHp = packet->hp;
-    newUser->_maxHp = packet->hp;
-    newUser->_seeRight = packet->direction == 4;
-    newUser->_shadow = _shadow;
-    newUser->_isLive = true;
-    newUser->_id = packet->id;
-    newUser->_hpBar = _hpBar;
-    newUser->_effect = *_effect;
-
-    mySprite = newUser;
-    userIndex.pop();
-
-}
-void createOtherCharacter(char* buf) {
-
-    stSC_CREATE_OTHER_CHARACTER* packet = (stSC_CREATE_OTHER_CHARACTER*)buf;
-
-    USHORT idx;
-    userIndex.front(&idx);
-
-    CSprite* newUser = user[idx];
-    new (newUser) CSprite(spriteData, otherUserUpdate);
-    newUser->_x = packet->x;
-    newUser->_y = packet->y;
-    newUser->_nowHp = packet->hp;
-    newUser->_maxHp = packet->hp;
-    newUser->_seeRight = packet->direction == 4;
-    newUser->_shadow = _shadow;
-    newUser->_isLive = true;
-    newUser->_id = packet->id;
-    newUser->_hpBar = _hpBar;
-    newUser->_effect = *_effect;
-
-    userIndex.pop();
-}
-void deleteCharacter(char* buf) {
-
-    stSC_DELETE_CHARACTER* packet = (stSC_DELETE_CHARACTER*)buf;
-
-    UINT id = packet->id;
-
-    for (USHORT userCnt = 0; userCnt < 50; ++userCnt) {
-
-        if (id == user[userCnt]->_id) {
-            user[userCnt]->_isLive = false;
-            userIndex.push(userCnt);
-        }
-
-    }
-
-}
-
-void moveStart(char* buf) {
-
-    stSC_MOVE_START* packet = (stSC_MOVE_START*)buf;
-
-    UINT id = packet->id;
-
-    for (USHORT userCnt = 0; userCnt < 50; ++userCnt) {
-
-        if (id == user[userCnt]->_id) {
-
-            user[userCnt]->_x = packet->x;
-            user[userCnt]->_y = packet->y;
-            user[userCnt]->_msg = (INPUT_MESSAGE)packet->direction;
-            return;
-        }
-
-    }
-}
-
-void moveStop(char* buf) {
-
-    stSC_MOVE_STOP* packet = (stSC_MOVE_STOP*)buf;
-
-    UINT id = packet->id;
-
-    for (USHORT userCnt = 0; userCnt < 50; ++userCnt) {
-
-        if (id == user[userCnt]->_id) {
-
-            user[userCnt]->_x = packet->x;
-            user[userCnt]->_y = packet->y;
-            user[userCnt]->_msg = INPUT_MESSAGE::NONE;
-            user[userCnt]->_seeRight = packet->direction == 4;
-            return;
-        }
-
-    }
-
-}
-
-void attack1(char* buf) {
-
-    stSC_ATTACK1* packet = (stSC_ATTACK1*)buf;
-
-
-    UINT id = packet->id;
-
-    for (USHORT userCnt = 0; userCnt < 50; ++userCnt) {
-
-        if (id == user[userCnt]->_id) {
-
-            user[userCnt]->_x = packet->x;
-            user[userCnt]->_y = packet->y;
-            user[userCnt]->_msg = INPUT_MESSAGE::ATTACK1;
-            user[userCnt]->_seeRight = packet->direction == 4;
-            return;
-        }
-
-    }
-}
-void attack2(char* buf) {
-
-    stSC_ATTACK2* packet = (stSC_ATTACK2*)buf;
-
-
-    UINT id = packet->id;
-
-    for (USHORT userCnt = 0; userCnt < 50; ++userCnt) {
-
-        if (id == user[userCnt]->_id) {
-
-            user[userCnt]->_x = packet->x;
-            user[userCnt]->_y = packet->y;
-            user[userCnt]->_msg = INPUT_MESSAGE::ATTACK2;
-            user[userCnt]->_seeRight = packet->direction == 4;
-            return;
-        }
-
-    }
-}
-void attack3(char* buf) {
-
-    stSC_ATTACK3* packet = (stSC_ATTACK3*)buf;
-
-
-    UINT id = packet->id;
-
-    for (USHORT userCnt = 0; userCnt < 50; ++userCnt) {
-
-        if (id == user[userCnt]->_id) {
-
-            user[userCnt]->_x = packet->x;
-            user[userCnt]->_y = packet->y;
-            user[userCnt]->_msg = INPUT_MESSAGE::ATTACK3;
-            user[userCnt]->_seeRight = packet->direction == 4;
-            return;
-        }
-
-    }
-}
-
-void damage(char* buf) {
-
-    stSC_DAMAGE* packet = (stSC_DAMAGE*)buf;
-
-    CSprite* attackSprite = nullptr;
-    CSprite* damageSprite = nullptr;
-
-
-    for (USHORT userCnt = 0; userCnt < 50; ++userCnt) {
-
-        if (packet->attackId == user[userCnt]->_id) {
-
-            attackSprite = user[userCnt];
-        }
-
-        if (packet->damageId == user[userCnt]->_id) {
-
-            damageSprite = user[userCnt];
-        }
-
-    }
-       
-    damageSprite->_nowHp = packet->damageHp;
-
-    damageSprite->_effect._doneSingleTime = false;
-    damageSprite->_effect._currentImageIndex = 0;
-
-}

@@ -5,24 +5,52 @@
 #define msgBoxWsaError(errorMsg, errorCode) msgBoxWsaErrorW(errorMsg, errorCode, __FILEW__, __LINE__);
 #define UM_SOCKET (WM_USER+1)
 
-extern SOCKET sock;
+constexpr UINT NETWORK_BUFFER_SIZE = 100;
 
-static const WCHAR* SERVER_IP = L"172.30.1.16";
-static const USHORT SERVER_PORT = 5000;
+class CSprite;
+class CSpriteData;
+class CImage;
+class CAnimation;
+template<typename T>
+class CQueue;
+class CProxyFuncBase;
+class CStubFunc;
 
-constexpr UINT NETWORK_BUFFER_SIZE = 5000;
-extern CRingBuffer recvBuffer;
-extern CRingBuffer sendBuffer;
+extern CSprite* user[50];
+extern CQueue<USHORT>* userIndex;
+extern CSpriteData* spriteData;
+extern CImage* _shadow;
+extern CImage* _hpBar;
+extern CAnimation* _effect;
+extern CSprite* mySprite;
+extern CProxyFuncBase* proxy;
+extern CStubFunc* stub;
 
-extern bool ableSendPacket;
+void userUpdate(CSprite* sprite, void* argv);
+void otherUserUpdate(CSprite* sprite, void* argv);
+
+class CNetwork {
+public:
+
+	CNetwork();
+
+	bool networkInit(HWND);
+
+	bool socketMessageProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+	CRingBuffer recvBuffer;
+	CRingBuffer sendBuffer;
+
+	bool recvPacket();
+	bool sendPacket();
+	bool ableSendPacket;
+private:
+
+	SOCKET sock;
+	const WCHAR* SERVER_IP = L"127.0.0.1";
+	const USHORT SERVER_PORT = 5000;
+
+};
 
 void printWsaErrorW(const WCHAR* errorMsg, int* errorCode, const WCHAR* file, int line);
 void msgBoxWsaErrorW(const WCHAR* errorMsg, int* errorCode, const WCHAR* file, int line);
-bool networkInit(HWND);
-bool socketMessageProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-bool recvPacket();
-void packetProc();
-bool sendPacket();
-
-static void (*packetFunc[31])(char*);

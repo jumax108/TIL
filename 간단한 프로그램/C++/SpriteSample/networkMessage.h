@@ -20,7 +20,6 @@ struct stSC_CREATE_MY_CHARACTER {
 
 };
 #pragma pack()
-void createMyCharacter(char* buf);
 
 #define SC_CREATE_OTHER_CHARACTER		1
 #pragma pack(1)
@@ -34,7 +33,6 @@ struct stSC_CREATE_OTHER_CHARACTER {
 
 };
 #pragma pack()
-void createOtherCharacter(char* buf);
 
 #define SC_DELETE_CHARACTER				2
 #pragma pack(1)
@@ -44,7 +42,6 @@ struct stSC_DELETE_CHARACTER {
 
 };
 #pragma pack()
-void deleteCharacter(char* buf);
 
 #define MOVE_DIR_LL						0
 #define MOVE_DIR_LU						1
@@ -66,7 +63,6 @@ struct stCS_MOVE_START {
 };
 #pragma pack()
 
-int rpcMoveStart(SOCKET sock, BYTE direction, USHORT x, USHORT y);
 
 #define SC_MOVE_START				11
 #pragma pack(1)
@@ -78,7 +74,6 @@ struct stSC_MOVE_START {
 };
 #pragma pack()
 
-void moveStart(char* buf);
 
 #define CS_MOVE_STOP				12
 #pragma pack(1)
@@ -89,7 +84,6 @@ struct stCS_MOVE_STOP {
 };
 #pragma pack()
 
-int rpcMoveStop(SOCKET sock, BYTE direction, USHORT x, USHORT y);
 
 #define SC_MOVE_STOP				13
 #pragma pack(1)
@@ -101,7 +95,6 @@ struct stSC_MOVE_STOP {
 };
 #pragma pack()
 
-void moveStop(char* buf);
 
 #define CS_ATTACK1					20
 #pragma pack(1)
@@ -112,7 +105,6 @@ struct stCS_ATTACK1 {
 };
 #pragma pack()
 
-int rpcAttack1(SOCKET sock, BYTE direction, USHORT x, USHORT y);
 
 #define SC_ATTACK1					21
 #pragma pack(1)
@@ -124,7 +116,6 @@ struct stSC_ATTACK1 {
 };
 #pragma pack()
 
-void attack1(char* buf);
 
 #define CS_ATTACK2					22			
 #pragma pack(1)
@@ -135,7 +126,6 @@ struct stCS_ATTACK2 {
 };
 #pragma pack()
 
-int rpcAttack2(SOCKET sock, BYTE direction, USHORT x, USHORT y);
 
 #define SC_ATTACK2					23
 #pragma pack(1)
@@ -146,7 +136,8 @@ struct stSC_ATTACK2{
 	USHORT y;
 };
 #pragma pack()
-void attack2(char* buf);
+
+
 
 #define CS_ATTACK3					24
 #pragma pack(1)
@@ -157,7 +148,6 @@ struct stCS_ATTACK3{
 };
 #pragma pack()
 
-int rpcAttack3(SOCKET sock, BYTE direction, USHORT x, USHORT y);
 
 #define SC_ATTACK3					25
 #pragma pack(1)
@@ -168,7 +158,7 @@ struct stSC_ATTACK3 {
 	USHORT y;
 };
 #pragma pack()
-void attack3(char* buf);
+
 
 #define SC_DAMAGE					30
 #pragma pack(1)
@@ -178,5 +168,5 @@ struct stSC_DAMAGE{
 	BYTE damageHp;
 };
 #pragma pack()
-void damage(char* buf);
+
 

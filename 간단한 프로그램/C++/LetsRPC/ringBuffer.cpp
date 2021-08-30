@@ -6,9 +6,9 @@
 #define min(a, b) (a>b?b:a)
 #define max(a, b) (a>b?a:b)
 
-CRingBuffer::CRingBuffer(UINT capacity) {
+CRingBuffer::CRingBuffer(unsigned int capacity) {
 	_capacity = capacity;
-	_buffer = (char*)malloc(capacity + 1);
+	_buffer = (unsigned char*)malloc(capacity + 1);
 	ZeroMemory(_buffer, capacity + 1);
 	memset(_buffer, 0x7f, capacity + 1);
 	_rear = 0;
@@ -20,16 +20,16 @@ CRingBuffer::~CRingBuffer() {
 	free(_buffer);
 }
 
-bool CRingBuffer::push(UINT size, const char* buffer) {
+bool CRingBuffer::push(unsigned int size, const unsigned char* buffer) {
 
 
-	UINT freeSize;
+	unsigned int freeSize;
 	getFreeSize(&freeSize);
 	if (freeSize < size) {
 		return false;
 	}
 
-	UINT rearTemp = _rear;
+	unsigned int rearTemp = _rear;
 
 	do {
 
@@ -51,9 +51,9 @@ bool CRingBuffer::push(UINT size, const char* buffer) {
 
 }
 
-bool CRingBuffer::pop(UINT size) {
+bool CRingBuffer::pop(unsigned int size) {
 
-	UINT usedSize;
+	unsigned int usedSize;
 	getUsedSize(&usedSize);
 	if (usedSize < size) {
 		return false;
@@ -64,9 +64,9 @@ bool CRingBuffer::pop(UINT size) {
 	return true;
 }
 
-bool CRingBuffer::front(UINT size, char* buffer) {
+bool CRingBuffer::front(unsigned int size, unsigned char* buffer) {
 
-	UINT usedSize;
+	unsigned int usedSize;
 	getUsedSize(&usedSize);
 	if (usedSize < size) {
 		return false;
@@ -93,15 +93,15 @@ bool CRingBuffer::front(UINT size, char* buffer) {
 
 }
 
-void CRingBuffer::getFreeSize(UINT* size) {
+void CRingBuffer::getFreeSize(unsigned int* size) {
 
-	UINT usedSize;
+	unsigned int usedSize;
 	getUsedSize(&usedSize);
 	*size = _capacity - usedSize;
 
 }
 
-void CRingBuffer::getUsedSize(UINT* size) {
+void CRingBuffer::getUsedSize(unsigned int* size) {
 
 	if (_rear >= _front) {
 
