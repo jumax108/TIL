@@ -4,12 +4,12 @@ class CRingBuffer {
 
 public:
 
-	CRingBuffer(UINT capacity);
+	CRingBuffer(unsigned int capacity);
 	~CRingBuffer();
 
-	bool push(UINT size, const BYTE* buffer);
-	bool pop(UINT size);
-	bool front(UINT size, BYTE* buffer);
+	bool push(unsigned int size, const unsigned char* buffer);
+	bool pop(unsigned int size);
+	bool front(unsigned int size, unsigned char* buffer);
 
 	inline int capacity() {
 		return _capacity;
@@ -23,14 +23,14 @@ public:
 		return _front;
 	}
 
-	void getUsedSize(UINT* size); 
-	void getFreeSize(UINT* size);
+	void getUsedSize(unsigned int* size); 
+	void getFreeSize(unsigned int* size);
 
 private:
 
-	BYTE* _buffer;
-	UINT _capacity;
-	UINT _rear;
-	UINT _front;
+	unsigned char* _buffer;
+	unsigned int _capacity;
+	unsigned int _rear;
+	unsigned int _front;
 
 };
