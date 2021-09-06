@@ -94,6 +94,77 @@ public:
 
 	}
 
+
+	static CBinaryTree<int>* test(HDC hdc, HWND hWnd) {
+
+		CBinaryTree<int>* tree = new CBinaryTree<int>();
+		std::vector<int> addList;
+		std::vector<int> eraseList;
+
+		constexpr int addNum = 100;
+		constexpr int eraseNum = 90;
+
+
+		srand(1000);
+
+		std::vector<int> valueList;
+		for (int value = 1; value <= addNum; ++value) {
+			valueList.push_back(value);
+		}
+
+		for (int addCnt = 0; addCnt < addNum; ++addCnt) {
+			int index = rand() % (valueList.size());
+			addList.push_back(valueList[index]);
+			valueList.erase(valueList.begin() + index);
+		}
+
+		for (int eraseCnt = 0; eraseCnt < eraseNum; ++eraseCnt) {
+			eraseList.push_back(rand() % (addNum - eraseCnt));
+		}
+
+		printf("Add Num\n ");
+		for (std::vector<int>::iterator addIter = addList.begin(); addIter != addList.end(); ++addIter) {
+			printf("%d ", *addIter);
+		}
+		printf("\n");
+
+		for (std::vector<int>::iterator addIter = addList.begin(); addIter != addList.end(); ++addIter) {
+			tree->insert(*addIter);
+		}
+
+		printf("Erase Index\n ");
+		for (std::vector<int>::iterator eraseIter = eraseList.begin(); eraseIter != eraseList.end(); ++eraseIter) {
+			printf("%d ", *eraseIter);
+		}
+		printf("\n");
+		tree->print(hdc);
+		for (std::vector<int>::iterator eraseIter = eraseList.begin(); eraseIter != eraseList.end(); ++eraseIter) {
+			tree->erase(addList[*eraseIter]);
+			addList.erase(addList.begin() + *eraseIter);
+
+
+			HBRUSH oldBrush;
+			HBRUSH greenBrush = CreateSolidBrush(RGB(20, 120, 50));
+			oldBrush = (HBRUSH)SelectObject(hdc, greenBrush);
+			Rectangle(hdc, 0, 0, 1920, 1080);
+			SelectObject(hdc, oldBrush);
+			DeleteObject(greenBrush);
+
+			tree->print(hdc);
+		}
+
+		printf("Correct Answer\n ");
+		std::sort(addList.begin(), addList.end());
+		for (std::vector<int>::iterator addIter = addList.begin(); addIter != addList.end(); ++addIter) {
+			printf("%d ", *addIter);
+		}
+		printf("\n");
+
+		printf("Actual Tree Value\n ");
+		tree->print();
+
+		return tree;
+	}
 private:
 
 	stNode* root;
@@ -117,6 +188,8 @@ private:
 		}
 		int left = (printCnt * 2 + 1) * 40;
 		int top = deepth * 85;
+
+
 		Ellipse(hdc, left, top, left + 80, top + 80);
 		char buf[5];
 		ZeroMemory(buf, 5);
@@ -128,49 +201,55 @@ private:
 		}
 		return printCnt;
 	}
-
 	void eraseNode(stNode** node) {
 
-		stNode** left = &(*node)->left;
-		stNode** right = &(*node)->right;
+		stNode* left = (*node)->left;
+		stNode* right = (*node)->right;
 
-		if (*left == nullptr && *right == nullptr) {
+		if (left == nullptr && right == nullptr) {
 			delete(*node);
 			*node = nullptr;
 		}
-		else if (*left != nullptr) {
+		else if (left != nullptr) {
 			stNode* eraseNodeParent = *node;
-			stNode** findEraseNode = left;
+			stNode* findEraseNode = left;
 
-			while ((*findEraseNode)->right != nullptr) {
-				eraseNodeParent = *findEraseNode;
-				findEraseNode = &(*findEraseNode)->right;
+			while (findEraseNode->right != nullptr) {
+				eraseNodeParent = findEraseNode;
+				findEraseNode = findEraseNode->right;
 			}
 
-			(*node)->data = (*findEraseNode)->data;
-			if(eraseNodeParent != *node)
-				eraseNodeParent->right = (*findEraseNode)->left;
+			(*node)->data = findEraseNode->data;
+			if (eraseNodeParent != *node) {
+				eraseNodeParent->right = findEraseNode->left;
+			}
+			else {
+				eraseNodeParent->left = findEraseNode->left;
+			}
 
-			delete(*findEraseNode);
-			*findEraseNode = nullptr;
+			delete(findEraseNode);
 		}
 		else {
 
 			stNode* eraseNodeParent = *node;
-			stNode** findEraseNode = right;
+			stNode* findEraseNode = right;
 
-			while ((*findEraseNode)->left != nullptr) {
-				eraseNodeParent = *findEraseNode;
-				findEraseNode = &(*findEraseNode)->left;
+			while (findEraseNode->left != nullptr) {
+				eraseNodeParent = findEraseNode;
+				findEraseNode = findEraseNode->left;
+			}
+			(*node)->data = findEraseNode->data;
+			if (eraseNodeParent != *node) {
+				eraseNodeParent->left = findEraseNode->right;
+			}
+			else {
+				eraseNodeParent->right = findEraseNode->right;
 			}
 
-			(*node)->data = (*findEraseNode)->data;
-			if (eraseNodeParent != *node)
-				eraseNodeParent->left = (*findEraseNode)->right;
+			delete(findEraseNode);
 
-			delete(*findEraseNode);
-			*findEraseNode = nullptr;
 		}
 	}
+
 
 };

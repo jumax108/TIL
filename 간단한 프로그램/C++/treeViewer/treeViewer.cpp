@@ -195,6 +195,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 */
             }
 
+            case 't':
+            {
+                tree = TREE_CLASS::test(GetDC(hWnd), hWnd);
+            }
+
             break;
         }
         InvalidateRect(hWnd, nullptr, true);
