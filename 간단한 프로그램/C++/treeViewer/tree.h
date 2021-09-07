@@ -90,7 +90,7 @@ public:
 			return;
 		}
 
-		printLoop(root, hdc, 1, 0);
+		printLoop(root, hdc, 1, new int(0));
 
 	}
 
@@ -174,32 +174,51 @@ private:
 		if (node->left != nullptr) {
 			printLoop(node->left);
 		}
-		printf("%d\n",node->data);
+		printf("%d ",node->data);
 		if (node->right != nullptr) {
 			printLoop(node->right);
 		}
 	}
 
-	int printLoop(stNode* node, HDC hdc, int deepth, int printCnt) {
+	int printLoop(stNode* node, HDC hdc, int deepth, int* printCnt) {
 
 
 		if (node->left != nullptr) {
-			printCnt = printLoop(node->left, hdc, deepth + 1, printCnt);
+
+			int leftNodePrintCnt = printLoop(node->left, hdc, deepth + 1, printCnt);
+
+			int lineNodeX = (*printCnt * 2 + 1) * 40 + 30;
+			int lineNodeY = deepth * 85 + 40;
+			int lineLeftNodeX = (leftNodePrintCnt * 2 + 1) * 40 + 80;
+			int lineLeftNodeY = (deepth + 1) * 85 + 40;
+
+			MoveToEx(hdc, lineNodeX, lineNodeY, nullptr);
+			LineTo(hdc, lineLeftNodeX, lineLeftNodeY);
 		}
-		int left = (printCnt * 2 + 1) * 40;
+
+		int nodePrintCnt = *printCnt;
+		int left = (*printCnt * 2 + 1) * 40;
 		int top = deepth * 85;
-
-
 		Ellipse(hdc, left, top, left + 80, top + 80);
 		char buf[5];
 		ZeroMemory(buf, 5);
 		_itoa_s(node->data, buf, 10);
 		TextOutA(hdc, left + 30, top + 40, buf, strlen(buf));
-		printCnt += 1;
+
+		*printCnt += 1;
 		if (node->right != nullptr) {
-			printCnt = printLoop(node->right, hdc, deepth + 1, printCnt);
+
+			int rightNodePrintCnt = printLoop(node->right, hdc, deepth + 1, printCnt);
+
+			int lineNodeX = (nodePrintCnt * 2 + 1) * 40 + 80;
+			int lineNodeY = deepth * 85 + 40;
+			int lineRightNodeX = (rightNodePrintCnt * 2 + 1) * 40;
+			int lineRightNodeY = (deepth + 1) * 85 + 40;
+
+			MoveToEx(hdc, lineNodeX, lineNodeY, nullptr);
+			LineTo(hdc, lineRightNodeX, lineRightNodeY);
 		}
-		return printCnt;
+		return nodePrintCnt;
 	}
 	void eraseNode(stNode** node) {
 

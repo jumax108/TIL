@@ -109,6 +109,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
+   AllocConsole();
+   freopen_s((FILE**)stdout,"CONOUT$", "w", stdout);
+
    if (!hWnd)
    {
       return FALSE;
