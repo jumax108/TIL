@@ -197,6 +197,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 addValue.erase(addValue.begin() + 1);
                 */
             }
+            break;
 
             case 't':
             {

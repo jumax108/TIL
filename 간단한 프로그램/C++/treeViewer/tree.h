@@ -189,8 +189,8 @@ private:
 
 			int lineNodeX = (*printCnt * 2 + 1) * 40 + 30;
 			int lineNodeY = deepth * 85 + 40;
-			int lineLeftNodeX = (leftNodePrintCnt * 2 + 1) * 40 + 80;
-			int lineLeftNodeY = (deepth + 1) * 85 + 40;
+			int lineLeftNodeX = (leftNodePrintCnt * 2 + 1) * 40 + 80 - (80 * 0.14);
+			int lineLeftNodeY = (deepth + 1) * 85 + (80 * 0.14);
 
 			MoveToEx(hdc, lineNodeX, lineNodeY, nullptr);
 			LineTo(hdc, lineLeftNodeX, lineLeftNodeY);
@@ -210,10 +210,10 @@ private:
 
 			int rightNodePrintCnt = printLoop(node->right, hdc, deepth + 1, printCnt);
 
-			int lineNodeX = (nodePrintCnt * 2 + 1) * 40 + 80;
-			int lineNodeY = deepth * 85 + 40;
-			int lineRightNodeX = (rightNodePrintCnt * 2 + 1) * 40;
-			int lineRightNodeY = (deepth + 1) * 85 + 40;
+			int lineNodeX = (nodePrintCnt * 2 + 1) * 40 + (80 * 0.86);
+			int lineNodeY = deepth * 85 + (80 * 0.86);
+			int lineRightNodeX = (rightNodePrintCnt * 2 + 1) * 40 + (80 * 0.14);
+			int lineRightNodeY = (deepth + 1) * 85 + (80 * 0.14);
 
 			MoveToEx(hdc, lineNodeX, lineNodeY, nullptr);
 			LineTo(hdc, lineRightNodeX, lineRightNodeY);
