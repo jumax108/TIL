@@ -33,42 +33,42 @@ public:
 		}
 
 		stNode** node = &root;
-		while (*node != nullptr) {
+		while ((*node) != nullptr) {
 			
-			if ((*node)->data == data) {
+			if (((*node))->data == data) {
 				delete addNode;
 				return;
 			}
 
-			if ((*node)->data > data) {
+			if (((*node))->data > data) {
 				
-				node = &(*node)->left;
+				node = &((*node))->left;
 			}
 			else {
-				node = &(*node)->right;
+				node = &((*node))->right;
 			}
 		}
 
-		*node = addNode;
+		(*node) = addNode;
 
 	}
 
 	void erase(T data) {
 
 		stNode** node = &root;
-		while (*node != nullptr) {
+		while ((*node) != nullptr) {
 
-			if ((*node)->data == data) {
+			if (((*node))->data == data) {
 				eraseNode(node);
 				return;
 			}
 
-			if ((*node)->data > data) {
+			if (((*node))->data > data) {
 
-				node = &(*node)->left;
+				node = &((*node))->left;
 			}
 			else {
-				node = &(*node)->right;
+				node = &((*node))->right;
 			}
 		}
 
@@ -222,15 +222,15 @@ private:
 	}
 	void eraseNode(stNode** node) {
 
-		stNode* left = (*node)->left;
-		stNode* right = (*node)->right;
+		stNode* left = ((*node))->left;
+		stNode* right = ((*node))->right;
 
 		if (left == nullptr && right == nullptr) {
-			delete(*node);
-			*node = nullptr;
+			delete((*node));
+			(*node) = nullptr;
 		}
 		else if (left != nullptr) {
-			stNode* eraseNodeParent = *node;
+			stNode* eraseNodeParent = (*node);
 			stNode* findEraseNode = left;
 
 			while (findEraseNode->right != nullptr) {
@@ -238,8 +238,8 @@ private:
 				findEraseNode = findEraseNode->right;
 			}
 
-			(*node)->data = findEraseNode->data;
-			if (eraseNodeParent != *node) {
+			((*node))->data = findEraseNode->data;
+			if (eraseNodeParent != (*node)) {
 				eraseNodeParent->right = findEraseNode->left;
 			}
 			else {
@@ -250,15 +250,15 @@ private:
 		}
 		else {
 
-			stNode* eraseNodeParent = *node;
+			stNode* eraseNodeParent = (*node);
 			stNode* findEraseNode = right;
 
 			while (findEraseNode->left != nullptr) {
 				eraseNodeParent = findEraseNode;
 				findEraseNode = findEraseNode->left;
 			}
-			(*node)->data = findEraseNode->data;
-			if (eraseNodeParent != *node) {
+			((*node))->data = findEraseNode->data;
+			if (eraseNodeParent != (*node)) {
 				eraseNodeParent->left = findEraseNode->right;
 			}
 			else {

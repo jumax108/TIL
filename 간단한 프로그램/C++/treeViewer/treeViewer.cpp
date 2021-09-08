@@ -5,8 +5,10 @@
 #include "treeViewer.h"
 
 #include "tree.h"
+#include "RedBlackTree.h"
 
-using TREE_CLASS = CBinaryTree<int>;
+//using TREE_CLASS = CBinaryTree<int>;
+using TREE_CLASS = CRedBlackTree<int>;
 
 TREE_CLASS* tree;
 
@@ -133,6 +135,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
 //
+int value;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -140,7 +143,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         {
             tree = new TREE_CLASS();
-            srand(1008);
+            srand(500);
         }
         break;
     case WM_COMMAND:
@@ -173,10 +176,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (wParam) {
             case 'a':
             {
-                // random value add
-                int value = rand() % 99 + 1;
-                tree->insert(value);
-                addValue.push_back(value);
+                    // random value add
+                    value = rand() % 99 + 1;
+
+                    if (value == 5) {
+                        int k = 3;
+                    }
+
+                    tree->insert(value);
+                    addValue.push_back(value);
+                
                 
             }
             break;

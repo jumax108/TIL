@@ -240,6 +240,9 @@ private:
 
 
 	void insertBalance(stNode* node) {
+		if (node->_data == 12) {
+			int k = 3;
+		}
 
 		// 노드가 루트면 탈출
 		if (node == _root) {
@@ -303,7 +306,7 @@ private:
 
 
 					// 부모 오른쪽을 닐노드로 변경
-					parent->right = node->_left;
+					parent->_right = node->_left;
 
 					// 노드 왼쪽으로 부모를 이동
 					node->_left = parent;
@@ -348,19 +351,28 @@ private:
 
 			// 조부까지 포함한 회전
 
-			if (grand->_parent->_left == grand) {
-				grand->_parent->_left = parent;
+			if (grand->_parent != nullptr) {
+				if (grand->_parent->_left == grand) {
+					grand->_parent->_left = parent;
+				}
+				else {
+					grand->_parent->_right = parent;
+				}
 			}
 			else {
-				grand->_parent->_right = parent;
+				_root = parent;
 			}
+			parent->_parent = grand->_parent;
 
 
 			if (isNodeLeftGrand == true) {
 				// 노드가 조부 왼쪽에 있을 경우
+
 				grand->_left = sibling;
-				grand->_parent = parent;
+				sibling->_parent = grand;
+
 				parent->_right = grand;
+				grand->_parent = parent;
 
 			
 
@@ -369,8 +381,10 @@ private:
 			else {
 				// 노드가 조부 오른쪽에 있을 경우
 				grand->_right = sibling;
+				sibling->_parent = grand;
+
+				parent->_left = grand;
 				grand->_parent = parent;
-				parent->left = grand;
 
 			}
 
@@ -392,6 +406,11 @@ private:
 #ifdef _WINDOWS_
 	HDC _hdc;
 	int printLoop(stNode* node, int deepth, int* printCnt) {
+
+		if (node->_data == 22 && node->_parent->_data == 13) {
+			int k = 3;
+		}
+		
 
 		if (node->_left->_isNill == false) {
 			int leftPrintCnt = printLoop(node->_left, deepth + 1, printCnt);
