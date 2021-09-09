@@ -89,8 +89,11 @@ public:
 			}
 			else {
 				// correct
+				bool isRed = (*node)->_isRed;
 				eraseNode(node);
-				eraseBalance(*node);
+				if (!isRed) {
+					eraseBalance(*node);
+				}
 				break;
 			}
 		}
@@ -240,9 +243,6 @@ private:
 
 
 	void insertBalance(stNode* node) {
-		if (node->_data == 12) {
-			int k = 3;
-		}
 
 		// 노드가 루트면 탈출
 		if (node == _root) {
@@ -354,37 +354,33 @@ private:
 			if (grand->_parent != nullptr) {
 				if (grand->_parent->_left == grand) {
 					grand->_parent->_left = parent;
+					parent->_parent = grand->_parent;
 				}
 				else {
 					grand->_parent->_right = parent;
+					parent->_parent = grand->_parent;
 				}
 			}
 			else {
+				parent->_parent = nullptr;
 				_root = parent;
 			}
-			parent->_parent = grand->_parent;
 
 
 			if (isNodeLeftGrand == true) {
 				// 노드가 조부 왼쪽에 있을 경우
-
 				grand->_left = sibling;
 				sibling->_parent = grand;
-
-				parent->_right = grand;
 				grand->_parent = parent;
-
-			
-
+				parent->_right = grand;
 
 			}
 			else {
 				// 노드가 조부 오른쪽에 있을 경우
 				grand->_right = sibling;
 				sibling->_parent = grand;
-
-				parent->_left = grand;
 				grand->_parent = parent;
+				parent->_left = grand;
 
 			}
 
@@ -400,17 +396,92 @@ private:
 
 	void eraseBalance(stNode* node) {
 
+		if (node == _root) {
+			_root->_isRed = false;
+			return;
+		}
+
+		stNode* parent = node->_parent;
+		stNode* sibling;
+		bool _isNodeLeftParent;
+		if (parent->_left == node) {
+			sibling = parent->_right;
+			_isNodeLeftParent = true;
+		}
+		else {
+			sibling = parent->_left;
+			_isNodeLeftParent = false;
+		}
+
+		if (parent->_isRed == true) {
+			// 부모가 빨강일 경우
+			parent->_isRed = false;
+			sibling->_isRed = true;
+			return;
+		}
+
+		// 부모가 검정일 경우
+
+		if (sibling->_isRed == false) {
+			// 형제가 검정일 경우
+			sibling->_isRed = true;
+		}
+
+		if (sibling->_isRed == true) {
+			// 형제가 빨강일 경우
+
+			if (_isNodeLeftParent == true) {
+				// 부모 형제간 좌회전
+				sibling->_isRed = false;
+
+				// 조부모의 자식 노드를 형제로 변경
+				if (parent->_parent->_left == parent) {
+					parent->_parent->_left = sibling;
+				}
+				else {
+					parent->_parent->_right = sibling;
+				}
+				sibling->_parent = parent->_parent;// 형제의 부모를 조부모로 변경
+
+				parent->_parent = sibling;// 조부모를 형제로 변경
+
+				parent->_right = sibling->_left; // 부모의 오른 자식을 형제의 왼자식으로 변경
+				sibling->_left->_parent = parent; // 형제의 자식의 부모를 부모로 변경
+
+				sibling->_left = parent; // 형제의 왼자식을 부모로 변경
+			}
+			else {
+
+				// 부모 형제간 우회전
+				sibling->_isRed = false;
+
+				// 조부모의 자식 노드를 형제로 변경
+				if (parent->_parent->_left == parent) {
+					parent->_parent->_left = sibling;
+				}
+				else {
+					parent->_parent->_right = sibling;
+				}
+				sibling->_parent = parent->_parent;// 형제의 부모를 조부모로 변경
+
+				parent->_parent = sibling;// 조부모를 형제로 변경
+
+				parent->_left = sibling->_right; // 부모의 왼자식을 형제의 오른자식으로 변경
+				sibling->_right->_parent = parent; // 형제의 자식의 부모를 부모로 변경
+
+				sibling->_right = parent; // 형제의 오른자식을 부모로 변경
+			}
+
+
+		}
+
+
 	}
 
 
 #ifdef _WINDOWS_
 	HDC _hdc;
 	int printLoop(stNode* node, int deepth, int* printCnt) {
-
-		if (node->_data == 22 && node->_parent->_data == 13) {
-			int k = 3;
-		}
-		
 
 		if (node->_left->_isNill == false) {
 			int leftPrintCnt = printLoop(node->_left, deepth + 1, printCnt);
