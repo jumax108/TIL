@@ -136,6 +136,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //
 int value;
+int index;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -197,7 +198,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     break;
                 }
                 
-                int index = rand() % addValue.size();
+                index = rand() % addValue.size();
+                if (addValue[index] == 88) {
+                    int k = 3;
+                }
                 tree->erase(addValue[index]);
                 addValue.erase(addValue.begin() + index);
                 

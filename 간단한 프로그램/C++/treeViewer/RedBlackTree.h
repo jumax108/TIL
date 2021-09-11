@@ -89,10 +89,10 @@ public:
 			}
 			else {
 				// correct
-				bool isRed = (*node)->_isRed;
-				eraseNode(node);
-				if (!isRed) {
-					eraseBalance(*node);
+				bool isRed;
+				stNode* erasedNode = eraseNode(node, &isRed);
+				if (isRed == false) {
+					eraseBalance(erasedNode);
 				}
 				break;
 			}
@@ -115,7 +115,7 @@ public:
 
 	static CRedBlackTree<T>* test(HDC hdc, HWND hWnd) {
 
-		srand(1000);
+		srand(908);
 
 		constexpr int dataNum = 10;
 		constexpr int eraseNum = 3;
@@ -171,7 +171,7 @@ private:
 
 	stNode* _root;
 
-	void eraseNode(stNode** node) {
+	stNode* eraseNode(stNode** node, bool* isRed) {
 
 		stNode* left = (*node)->_left;
 		stNode* right = (*node)->_right;
@@ -184,18 +184,24 @@ private:
 			// 모두 닐인 경우는 어짜피 여기서 부모에서 내 노드가 연결되어 있던 곳이 닐로 연결됨
 			// 노드의 우측 자식 존재
 
+			right->_parent = (*node)->_parent;
 			delete(left); // 좌측 닐 제거
+			*isRed = (*node)->_isRed;
 			delete(*node); // 현재 노드 제거
 			*node = right; // 부모 노드가 바라보고 있는 노드를 우측 노드로 변경
+			return *node;
 
 		}
 		else if (isRightNill == true) {
 
 			// 노드의 좌측 자식 존재
 
+			left->_parent = (*node)->_parent;
 			delete(right); // 우측 닐 제거
+			*isRed = (*node)->_isRed;
 			delete(*node); // 현재 노드 제거
 			*node = left;  // 부모가 바라보고 있는 노드를 좌측 노드로 변경
+			return *node;
 
 		}
 		else {
@@ -212,7 +218,10 @@ private:
 
 				(*node)->_data = left->_data; // 노드의 데이터를 왼쪽 자식의 데이터로 변경
 				(*node)->_left = left->_left; // 노드의 왼쪽 자식을 왼쪽 자식의 왼쪽 자식으로 변경
+				left->_left->_parent = *node;
+				*isRed = left->_isRed;
 				delete(left); // 왼쪽 노드 제거
+				return (*node)->_left;
 
 			}
 			else {
@@ -232,9 +241,13 @@ private:
 				// 닐이면 닐 연결됨
 
 				stNode* lastNodeLeft = (*lastRightNode)->_left; // 최우측 노드의 좌측 노드
+				lastNodeLeft->_parent = (*lastRightNode)->_parent;
+				*isRed = (*lastRightNode)->_isRed;
 				delete(*lastRightNode); // 최우측 노드 제거
 				*lastRightNode = lastNodeLeft; // 최우측 노드의 부모 노드와 최우측 노드의 좌측 노드 연결
+				
 
+				return *lastRightNode;
 			}
 
 		}
@@ -399,11 +412,18 @@ private:
 		if (node == _root) {
 			_root->_isRed = false;
 			return;
+						
+		}
+
+		if (node->_isRed == true) {
+			node->_isRed = false;
+			return;
 		}
 
 		stNode* parent = node->_parent;
 		stNode* sibling;
 		bool _isNodeLeftParent;
+
 		if (parent->_left == node) {
 			sibling = parent->_right;
 			_isNodeLeftParent = true;
@@ -415,39 +435,202 @@ private:
 
 		if (parent->_isRed == true) {
 			// 부모가 빨강일 경우
-			parent->_isRed = false;
-			sibling->_isRed = true;
-			return;
-		}
+			
+			if (sibling->_isNill == true) {
+				return;
+			}
 
-		// 부모가 검정일 경우
+			if (sibling->_left->_isRed == false && sibling->_right->_isRed == false) {
+				return;
+			}
 
-		if (sibling->_isRed == false) {
-			// 형제가 검정일 경우
-			sibling->_isRed = true;
-		}
+			// 형제를 빨강으로 변경했는데, 형제의 자식도 빨간색이 있을 경우
+			
 
-		if (sibling->_isRed == true) {
-			// 형제가 빨강일 경우
+			stNode* left = sibling->_left;
+			stNode* right = sibling->_right;
 
-			if (_isNodeLeftParent == true) {
-				// 부모 형제간 좌회전
-				sibling->_isRed = false;
+			if (left->_isRed == true && right->_isRed == false) {
+				// 형제의 좌측 자식이 빨강
 
-				// 조부모의 자식 노드를 형제로 변경
+				// 형제 - 형제 자식 간 회전
+
+				sibling->_isRed = true;
+				left->_isRed = false;
+
+				if (_isNodeLeftParent == true) {
+					parent->_right == left;
+				}
+				else {
+					parent->_left = left;
+				}
+				left->_parent = parent;
+
+				sibling->_left = left->_right;
+				left->_right->_parent = sibling;
+
+				left->_right = sibling;
+				sibling->_parent = left;
+
+
+			}
+
+			// 형제의 우측 자식이 빨강
+			
+			// 부모 - 자식 간 회전
+
+			if (parent->_parent != nullptr) {
 				if (parent->_parent->_left == parent) {
 					parent->_parent->_left = sibling;
 				}
 				else {
 					parent->_parent->_right = sibling;
 				}
-				sibling->_parent = parent->_parent;// 형제의 부모를 조부모로 변경
+				sibling->_parent = parent->_parent;
+			}
+			else {
+				sibling->_parent = nullptr;
+			}
 
-				parent->_parent = sibling;// 조부모를 형제로 변경
+			if (_isNodeLeftParent == true) {
+				
+				// 좌회전
+				parent->_right = sibling->_left;
+				sibling->_left->_parent = parent;
+
+				sibling->_left = parent;
+				parent->_parent = sibling;
+
+
+			}
+			else {
+
+				// 우회전
+				parent->_left = sibling->_right;
+				sibling->_right->_parent = parent;
+
+				sibling->_right = parent;
+				parent->_parent = sibling;
+			}
+
+			return;
+
+		}
+
+		// 부모가 검정일 경우
+
+		if (sibling->_isRed == false) {
+			// 형제가 검정일 경우
+
+			if (sibling->_isNill == false) {
+				sibling->_isRed = true;
+
+				if (sibling->_left->_isRed == true) {
+
+					// 형제의 좌측 자식이 빨강일 경우
+
+					// 형제 - 형제의 자식 간 우회전
+					stNode* left = sibling->_left;
+					stNode* right = sibling->_right;
+
+					sibling->_isRed = true;
+					left->_isRed = false;
+
+					parent->_right = left;
+					left->_parent = parent;
+
+					sibling->_left = left->_right;
+					left->_right->_parent = sibling;
+
+					left->_right = sibling;
+					sibling->_parent = left;
+
+					sibling = parent->_right;
+
+				}
+
+				if (sibling->_right->_isRed == true) {
+
+					// 형제의 우측 자식이 빨강일 경우
+					sibling->_right->_isRed = false;
+
+					// 부모의 부모와의 연결
+					if (parent->_parent != nullptr) {
+						if (parent->_parent->_left == parent) {
+
+							parent->_parent->_left = sibling;
+
+						}
+						else {
+							parent->_parent->_right = sibling;
+						}
+						sibling->_parent = parent->_parent;
+					}
+					else {
+						sibling->_parent = nullptr;
+					}
+
+					if (_isNodeLeftParent == true) {
+						// 부모 - 자식 간 좌회전
+
+						// 형제의 왼쪽 자식 던지기
+						parent->_right = sibling->_left;
+						sibling->_left->_parent = parent;
+
+						// 부모 형제 연결
+						sibling->_left = parent;
+						parent->_parent = sibling;
+
+					}
+					else {
+						// 부모 - 자식 간 우회전
+
+						// 형제의 왼쪽 자식 던지기
+						parent->_left = sibling->_right;
+						sibling->_right->_parent = parent;
+
+						// 부모 형제 연결
+						sibling->_right = parent;
+						parent->_parent = sibling;
+					}
+
+					return;
+				}
+			}
+			eraseBalance(parent);
+			return;
+		}
+
+		if (sibling->_isRed == true) {
+			// 형제가 빨강일 경우
+
+			if (sibling->_left->_isNill == false) {
+				sibling->_left->_isRed = true;
+			}
+
+			// 조부모의 자식 노드를 형제로 변경
+			if (parent->_parent != nullptr) {
+				if (parent->_parent->_left == parent) {
+					parent->_parent->_left = sibling;
+				}
+				else {
+					parent->_parent->_right = sibling;
+				}
+				sibling->_parent = parent->_parent;
+			}
+			else {
+				sibling->_parent = nullptr;
+				_root = sibling;
+			}
+
+			if (_isNodeLeftParent == true) {                                                                                                                                      
+				// 부모 형제간 좌회전
+				sibling->_isRed = false;
 
 				parent->_right = sibling->_left; // 부모의 오른 자식을 형제의 왼자식으로 변경
 				sibling->_left->_parent = parent; // 형제의 자식의 부모를 부모로 변경
 
+				parent->_parent = sibling;// 부모의 부모를 형제로 변경
 				sibling->_left = parent; // 형제의 왼자식을 부모로 변경
 			}
 			else {
@@ -455,23 +638,14 @@ private:
 				// 부모 형제간 우회전
 				sibling->_isRed = false;
 
-				// 조부모의 자식 노드를 형제로 변경
-				if (parent->_parent->_left == parent) {
-					parent->_parent->_left = sibling;
-				}
-				else {
-					parent->_parent->_right = sibling;
-				}
-				sibling->_parent = parent->_parent;// 형제의 부모를 조부모로 변경
-
-				parent->_parent = sibling;// 조부모를 형제로 변경
-
 				parent->_left = sibling->_right; // 부모의 왼자식을 형제의 오른자식으로 변경
 				sibling->_right->_parent = parent; // 형제의 자식의 부모를 부모로 변경
 
+				parent->_parent = sibling;// 조부모를 형제로 변경
 				sibling->_right = parent; // 형제의 오른자식을 부모로 변경
 			}
 
+			
 
 		}
 
