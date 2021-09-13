@@ -1,19 +1,11 @@
-﻿// treeViewer.cpp : 애플리케이션에 대한 진입점을 정의합니다.
+﻿// Astar.cpp : 애플리케이션에 대한 진입점을 정의합니다.
 //
 
 #include "framework.h"
-#include "treeViewer.h"
+#include "resource.h"
 
-#include "tree.h"
-#include "RedBlackTree.h"
-
-//using TREE_CLASS = CBinaryTree<int>;
-using TREE_CLASS = CRedBlackTree<int>;
-
-TREE_CLASS* tree;
-
-using namespace std;
-vector<int> addValue;
+#include "myLinkedList.h"
+#include "Astar.h"
 
 #define MAX_LOADSTRING 100
 
@@ -28,6 +20,8 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+CAstar* aStar;
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR    lpCmdLine,
@@ -40,7 +34,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // 전역 문자열을 초기화합니다.
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_TREEVIEWER, szWindowClass, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_ASTAR, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
     // 애플리케이션 초기화를 수행합니다:
@@ -49,7 +43,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TREEVIEWER));
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_ASTAR));
 
     MSG msg;
 
@@ -84,10 +78,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TREEVIEWER));
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ASTAR));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(CreateSolidBrush(RGB(20,120,50)));
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_TREEVIEWER);
+    wcex.hbrBackground = CreateSolidBrush(RGB(43, 43 ,43));
+    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_ASTAR);
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
@@ -111,9 +105,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
-   AllocConsole();
-   freopen_s((FILE**)stdout,"CONOUT$", "w", stdout);
-
    if (!hWnd)
    {
       return FALSE;
@@ -135,17 +126,42 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
 //
-int value;
-int index;
+
+int mouseX;
+int mouseY;
+
+int oldMouseX;
+int oldMouseY;
+
+bool mouseDown = false;
+
+CAstar::stNode* endNode = nullptr;
+
+int width = 40;
+int height = 20;
+
+int blockSize = 30;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_CREATE:
-        {
-            tree = new TREE_CLASS();
-            srand(500);
+    case WM_TIMER:
+
+        CAstar::stNode* node;
+        node = aStar->pathFindSingleLoop();
+        if (node == nullptr) {
+            KillTimer(hWnd, 0);
         }
+        else if ((int)node != 1) {
+            endNode = node;
+            KillTimer(hWnd, 0);
+        }
+        InvalidateRect(hWnd, nullptr, true);
+
+        break;
+    case WM_CREATE:
+        aStar = new CAstar(width, height, blockSize);
         break;
     case WM_COMMAND:
         {
@@ -168,58 +184,107 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
+            aStar->print(hdc); 
+
+            HPEN hPen = CreatePen(PS_SOLID, 5, RGB(45, 20, 200));
+            HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+            if (endNode != nullptr) {
+                while (endNode->_parent != nullptr) {
+                    CAstar::stNode* parent = endNode->_parent;
+                    MoveToEx(hdc, endNode->_coord->_x * blockSize + (blockSize / 2), endNode->_coord->_y * blockSize + (blockSize / 2), nullptr);
+                    LineTo(hdc, parent->_coord->_x * blockSize + (blockSize / 2), parent->_coord->_y * blockSize + (blockSize / 2));
+                    endNode = parent;
+                }
+            }
+            SelectObject(hdc, hOldPen);
+            DeleteObject(hPen);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            tree->print(hdc);
             EndPaint(hWnd, &ps);
         }
         break;
-    case WM_CHAR:
-        switch (wParam) {
-            case 'a':
-            {
-                    // random value add
-                    value = rand() % 99 + 1;
+    case WM_MOUSEMOVE:
+        {
+            mouseX = GET_X_LPARAM(lParam) / blockSize * blockSize;
+            mouseY = GET_Y_LPARAM(lParam) / blockSize * blockSize;
 
-                    if (value == 5) {
-                        int k = 3;
-                    }
+            if (mouseDown == true) {
+                int x = mouseX / blockSize;
+                int y = mouseY / blockSize;
+                int oldX = oldMouseX / blockSize;
+                int oldY = oldMouseY / blockSize;
 
-                    tree->insert(value);
-                    addValue.push_back(value);
-                
-                
-            }
-            break;
-
-            case 'd':
-            {
-                // random value erase
-                if (addValue.size() == 0) {
+                if (0 > x || 0 > y || aStar->width() <= x || aStar->height() <= y) {
                     break;
                 }
-                
-                index = rand() % addValue.size();
-                if (addValue[index] == 88) {
-                    int k = 3;
+
+                if (x == oldX && y == oldY) {
+                    break;
                 }
-                tree->erase(addValue[index]);
-                addValue.erase(addValue.begin() + index);
+
+                oldMouseX = mouseX;
+                oldMouseY = mouseY;
+
+                if (aStar->map(y, x) == CAstar::MAP_STATE::ROAD) {
+                    aStar->map(y, x) = CAstar::MAP_STATE::WALL;
+                }
+                else {
+                    aStar->map(y, x) = CAstar::MAP_STATE::ROAD;
+                }
+
+                InvalidateRect(hWnd, nullptr, true);
                 
-                /*
-                tree->erase(63);
-                addValue.erase(addValue.begin() + 1);
-                */
-            }
-            break;
-
-            case 't':
-            {
-                tree = TREE_CLASS::test();
             }
 
-            break;
         }
-        InvalidateRect(hWnd, nullptr, true);
+        break;
+    case WM_RBUTTONDOWN:
+        {
+            aStar->listClear();
+            endNode = nullptr;
+            aStar->pathFindInit();
+            SetTimer(hWnd, 0, 100, nullptr);            
+            InvalidateRect(hWnd, nullptr, true);
+        }
+        break;
+    case WM_LBUTTONDOWN:
+        {
+            mouseDown = true;
+        }
+        break;
+    case WM_LBUTTONUP:
+        {
+            oldMouseX = -1;
+            oldMouseY = -1;
+
+            mouseDown = false;
+        }
+        break;
+    case WM_CHAR: 
+        {
+            switch (wParam) {
+            case 's':
+                aStar->startPoint(mouseY / blockSize, mouseX / blockSize);
+                InvalidateRect(hWnd, nullptr, true);
+                break;
+            case 'e':
+                aStar->endPoint(mouseY / blockSize, mouseX / blockSize);
+                InvalidateRect(hWnd, nullptr, true);
+                break;
+            case 'c':
+                aStar->listClear();
+                InvalidateRect(hWnd, nullptr, true);
+                endNode = nullptr;
+                KillTimer(hWnd, 0);
+                break;
+            case 'x':
+                delete(aStar);
+                aStar = new CAstar(width, height, blockSize);
+                KillTimer(hWnd, 0);
+                endNode = nullptr;
+                InvalidateRect(hWnd, nullptr, true);
+                break;
+            }
+        }
         break;
     case WM_DESTROY:
         PostQuitMessage(0);

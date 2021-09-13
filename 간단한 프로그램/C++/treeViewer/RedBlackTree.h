@@ -101,8 +101,105 @@ public:
 	}
 
 #ifdef _WINDOWS_
-	void print(HDC hdc) {
 
+	static CRedBlackTree<int>* test() {
+
+
+		static CRedBlackTree<int>* tree = nullptr;
+
+		static std::vector<int>* addNumList = nullptr;
+		static std::vector<int>* eraseIndexList = nullptr;
+
+		constexpr int addNum = 10;
+		constexpr int eraseNum = 5;
+
+		static std::vector<int>* ableNumList = nullptr;
+
+		static std::vector<int>::iterator addNumListIter;
+		static std::vector<int>::iterator eraseIndexListIter;
+
+		if (addNumList == nullptr) {
+
+			srand(time(NULL));
+			//int seed = rand() % 10000;
+			int seed = 104;
+			printf("seed : %d\n", seed);
+			srand(seed);
+
+			delete(tree);
+			tree = new CRedBlackTree();
+			addNumList = new std::vector<int>();
+			eraseIndexList = new std::vector<int>();
+			ableNumList = new std::vector<int>();
+
+			std::vector<int> answerList;
+
+			for (int numCnt = 0; numCnt < addNum; numCnt++) {
+				ableNumList->push_back(numCnt);
+			}
+
+			for (int numCnt = 0; numCnt < addNum; numCnt++) {
+				int index = rand() % ableNumList->size();
+				addNumList->push_back(ableNumList->at(index));
+				answerList.push_back(ableNumList->at(index));
+				ableNumList->erase(ableNumList->begin() + index);
+			}
+
+			for (int indexCnt = 0; indexCnt < eraseNum; ++indexCnt) {
+				int index = rand() % (addNum - indexCnt);
+				eraseIndexList->push_back(index);
+				answerList.erase(answerList.begin() + index);
+			}
+
+			std::sort(answerList.begin(), answerList.end());
+
+			addNumListIter = addNumList->begin();
+			eraseIndexListIter = eraseIndexList->begin();
+			
+			printf("answer: ");
+			for (std::vector<int>::iterator answerIter = answerList.begin(); answerIter != answerList.end(); ++answerIter) {
+
+				printf("%d ", *answerIter);
+
+			}
+			printf("\n");
+
+		}
+
+		if (addNumListIter != addNumList->end()) {
+
+			
+			tree->insert(*addNumListIter);
+			++addNumListIter;
+			return tree;
+
+		} 
+
+		if (eraseIndexListIter != eraseIndexList->end()) {
+
+			tree->erase(addNumList->at(*eraseIndexListIter));
+			addNumList->erase(addNumList->begin() + *eraseIndexListIter);
+			++eraseIndexListIter;
+			addNumListIter = addNumList->end();
+			return tree;
+
+		}
+		
+		delete(addNumList);
+		addNumList = nullptr;
+		delete(eraseIndexList);
+		eraseIndexList = nullptr;
+		//delete(tree);
+		//tree = nullptr;
+		delete(ableNumList);
+		ableNumList = nullptr;
+
+		tree = test();
+
+		return tree;
+	}
+
+	void print(HDC hdc) {
 		if (_root->_isNill == true) {
 			return;
 		}
@@ -459,7 +556,7 @@ private:
 				left->_isRed = false;
 
 				if (_isNodeLeftParent == true) {
-					parent->_right == left;
+					parent->_right = left;
 				}
 				else {
 					parent->_left = left;
@@ -472,6 +569,7 @@ private:
 				left->_right = sibling;
 				sibling->_parent = left;
 
+				sibling = left;
 
 			}
 
