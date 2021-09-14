@@ -9,7 +9,7 @@
 #include "RedBlackTree.h"
 
 
-SimpleProfiler* sp;
+SimpleProfiler* sp = nullptr;
 
 //using TREE_CLASS = CBinaryTree<int>;
 using TREE_CLASS = CRedBlackTree<int>;
@@ -141,6 +141,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 int value;
 int index;
+
+int x = 0;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -173,13 +176,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            tree->print(hdc);
+            tree->print(hdc, x);
             EndPaint(hWnd, &ps);
         }
         break;
     case WM_CHAR:
         switch (wParam) {
+
             case 'a':
+            {
+                x -= 10;
+            }
+            break;
+            
+            case 'd':
+            {
+                x += 10;
+            }
+            break;
+
+            case 'z':
             {
                 // random value add
                 value = rand() % 99 + 1;
@@ -194,7 +210,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             break;
 
-            case 'd':
+            case 'x':
             {
                 // random value erase
                 if (addValue.size() == 0) {
@@ -215,7 +231,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             break;
 
-            case 't':
+            case 'c':
             {
                 
                 sp = new SimpleProfiler();
@@ -230,6 +246,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 sp->printToFile();
 
                 delete (sp);
+                sp = nullptr;
                 
                 //tree = TREE_CLASS::singleCaseTest(7169);
             }

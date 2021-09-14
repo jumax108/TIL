@@ -41,6 +41,7 @@ public:
 
 	void insert(T data) {
 
+		if(sp != nullptr)
 		sp->profileBegin("insert");
 
 		do {
@@ -83,12 +84,12 @@ public:
 		} while (false);
 
 FIN:
-
+		if (sp != nullptr)
 		sp->profileEnd("insert");
 	}
 
 	void erase(T data) {
-
+		if (sp != nullptr)
 		sp->profileBegin("erase");
 		stNode** node = &_root;
 
@@ -113,6 +114,7 @@ FIN:
 				break;
 			}
 		}
+		if (sp != nullptr)
 		sp->profileEnd("erase");
 	}
 
@@ -381,14 +383,14 @@ FIN:
 		return tree;
 	}
 
-	void print(HDC hdc) {
+	void print(HDC hdc, int x) {
 		if (_root->_isNill == true) {
 			return;
 		}
 
 		_hdc = hdc;
 		int printCnt = 0;
-		printLoop(_root, 0, &printCnt);
+		printLoop(_root, 0, &printCnt, x);
 
 	}
 
@@ -991,10 +993,10 @@ private:
 
 #ifdef _WINDOWS_
 	HDC _hdc;
-	int printLoop(stNode* node, int deepth, int* printCnt) {
+	int printLoop(stNode* node, int deepth, int* printCnt, int x) {
 
 		if (node->_left->_isNill == false) {
-			int leftPrintCnt = printLoop(node->_left, deepth + 1, printCnt);
+			int leftPrintCnt = printLoop(node->_left, deepth + 1, printCnt, x);
 
 			// 좌측 노드의 간선 시작점
 			int leftLineX = leftPrintCnt * 80 + 80 - (80 * 0.14); // right
@@ -1004,8 +1006,8 @@ private:
 			int nodeLineX = *printCnt * 80 + (80 * 0.14); // left
 			int nodeLineY = deepth * 80 + 80 - (80 * 0.14); // bottom
 
-			MoveToEx(_hdc, leftLineX, leftLineY, nullptr);
-			LineTo(_hdc, nodeLineX, nodeLineY);
+			MoveToEx(_hdc, leftLineX - x, leftLineY, nullptr);
+			LineTo(_hdc, nodeLineX - x, nodeLineY);
 
 		}
 
@@ -1030,19 +1032,19 @@ private:
 		}
 
 		HBRUSH oldEllipseBrush = (HBRUSH)SelectObject(_hdc, ellipseBrush);
-		Ellipse(_hdc, ellipseRect.left, ellipseRect.top, ellipseRect.right, ellipseRect.bottom);
+		Ellipse(_hdc, ellipseRect.left - x, ellipseRect.top, ellipseRect.right - x, ellipseRect.bottom);
 		SelectObject(_hdc, oldEllipseBrush);
 		DeleteObject(ellipseBrush);
 
 		WCHAR text[10] = { 0, };
 		_itow_s(node->_data, text, 10, 10);
-		TextOutW(_hdc, ellipseRect.left + 40, ellipseRect.top + 40, text, wcslen(text));
+		TextOutW(_hdc, ellipseRect.left + 40 - x, ellipseRect.top + 40, text, wcslen(text));
 
 		int nodePrintCnt = *printCnt;
 		*printCnt += 1;
 
 		if (node->_right->_isNill == false) {
-			int rightPrintCnt = printLoop(node->_right, deepth + 1, printCnt);
+			int rightPrintCnt = printLoop(node->_right, deepth + 1, printCnt, x);
 
 			// 우측 노드의 간선 시작점
 			int rightLineX = rightPrintCnt * 80 + (80 * 0.14); // left
@@ -1052,8 +1054,8 @@ private:
 			int nodeLineX = nodePrintCnt * 80 + 80 - (80 * 0.14); // right
 			int nodeLineY = deepth * 80 + 80 - (80 * 0.14); // bottom
 
-			MoveToEx(_hdc, rightLineX, rightLineY, nullptr);
-			LineTo(_hdc, nodeLineX, nodeLineY);
+			MoveToEx(_hdc, rightLineX - x, rightLineY, nullptr);
+			LineTo(_hdc, nodeLineX - x, nodeLineY);
 
 		}
 
