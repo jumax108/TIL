@@ -46,6 +46,28 @@ CAstar::stCoord* CAstar::endPoint(int y, int x) {
 }
 
 void CAstar::pathFind() {
+
+	pathFindInit();
+
+	void* result;
+
+	do {
+		result = pathFindSingleLoop();
+
+
+	} while ((int)result == 1);
+
+	do {
+		if (result == nullptr) {
+			// 경로 없음
+			break;
+		}
+		// 경로 있음
+		
+	} while (false);
+
+	// 마무리
+
 }
 
 void CAstar::pathFindInit() {

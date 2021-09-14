@@ -2,6 +2,8 @@
 
 class SimpleProfiler;
 
+extern SimpleProfiler* sp;
+
 
 template<typename T>
 class CBinaryTree {
@@ -27,53 +29,60 @@ public:
 
 	void insert(T data) {
 
-		stNode* addNode = new stNode(data);
+		sp->profileBegin("insert");
+		do {
+			stNode* addNode = new stNode(data);
 
-		if (root == nullptr) {
-			root = addNode;
-			return;
-		}
-
-		stNode** node = &root;
-		while ((*node) != nullptr) {
-			
-			if (((*node))->data == data) {
-				delete addNode;
-				return;
+			if (root == nullptr) {
+				root = addNode;
+				break;
 			}
 
-			if (((*node))->data > data) {
-				
-				node = &((*node))->left;
-			}
-			else {
-				node = &((*node))->right;
-			}
-		}
+			stNode** node = &root;
+			while ((*node) != nullptr) {
 
-		(*node) = addNode;
+				if (((*node))->data == data) {
+					delete addNode;
+					goto FIN;
+				}
 
+				if (((*node))->data > data) {
+
+					node = &((*node))->left;
+				}
+				else {
+					node = &((*node))->right;
+				}
+			}
+
+			(*node) = addNode;
+		} while (false);
+		FIN:
+		sp->profileEnd("insert");
 	}
 
 	void erase(T data) {
+		sp->profileBegin("erase");
+		do {
+			stNode** node = &root;
+			while ((*node) != nullptr) {
 
-		stNode** node = &root;
-		while ((*node) != nullptr) {
+				if (((*node))->data == data) {
+					eraseNode(node);
+					goto FIN;
+				}
 
-			if (((*node))->data == data) {
-				eraseNode(node);
-				return;
+				if (((*node))->data > data) {
+
+					node = &((*node))->left;
+				}
+				else {
+					node = &((*node))->right;
+				}
 			}
-
-			if (((*node))->data > data) {
-
-				node = &((*node))->left;
-			}
-			else {
-				node = &((*node))->right;
-			}
-		}
-
+		} while (false);
+		FIN:
+		sp->profileEnd("erase");
 	}
 
 	void print() {
@@ -104,10 +113,11 @@ public:
 		std::vector<int> eraseList;
 
 		constexpr int addNum = 100;
-		constexpr int eraseNum = 90;
+		constexpr int eraseNum = 50;
 
 
-		srand(1000);
+		//srand(1000);
+		srand(rand() % 10000);
 
 		std::vector<int> valueList;
 		for (int value = 1; value <= addNum; ++value) {
@@ -133,28 +143,29 @@ public:
 		for (std::vector<int>::iterator addIter = addList.begin(); addIter != addList.end(); ++addIter) {
 			tree->insert(*addIter);
 		}
-
+		/*
 		printf("Erase Index\n ");
 		for (std::vector<int>::iterator eraseIter = eraseList.begin(); eraseIter != eraseList.end(); ++eraseIter) {
 			printf("%d ", *eraseIter);
 		}
 		printf("\n");
-		tree->print(hdc);
+		//tree->print(hdc);
+		*/
 		for (std::vector<int>::iterator eraseIter = eraseList.begin(); eraseIter != eraseList.end(); ++eraseIter) {
 			tree->erase(addList[*eraseIter]);
 			addList.erase(addList.begin() + *eraseIter);
 
-
+			/*
 			HBRUSH oldBrush;
 			HBRUSH greenBrush = CreateSolidBrush(RGB(20, 120, 50));
 			oldBrush = (HBRUSH)SelectObject(hdc, greenBrush);
 			Rectangle(hdc, 0, 0, 1920, 1080);
 			SelectObject(hdc, oldBrush);
 			DeleteObject(greenBrush);
-
-			tree->print(hdc);
+			*/
+			//tree->print(hdc);
 		}
-
+		
 		printf("Correct Answer\n ");
 		std::sort(addList.begin(), addList.end());
 		for (std::vector<int>::iterator addIter = addList.begin(); addIter != addList.end(); ++addIter) {
@@ -162,8 +173,8 @@ public:
 		}
 		printf("\n");
 
-		printf("Actual Tree Value\n ");
-		tree->print();
+		//printf("Actual Tree Value\n ");
+		//tree->print();
 
 		return tree;
 	}

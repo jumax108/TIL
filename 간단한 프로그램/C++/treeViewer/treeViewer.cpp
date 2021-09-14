@@ -4,15 +4,15 @@
 #include "framework.h"
 #include "treeViewer.h"
 
-#include "tree.h"
 #include "SimpleProfiler.h"
+#include "tree.h"
 #include "RedBlackTree.h"
 
 
 SimpleProfiler* sp;
 
-using TREE_CLASS = CBinaryTree<int>;
-//using TREE_CLASS = CRedBlackTree<int>;
+//using TREE_CLASS = CBinaryTree<int>;
+using TREE_CLASS = CRedBlackTree<int>;
 
 TREE_CLASS* tree;
 
@@ -181,16 +181,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (wParam) {
             case 'a':
             {
-                    // random value add
-                    value = rand() % 99 + 1;
+                // random value add
+                value = rand() % 99 + 1;
 
-                    if (value == 5) {
-                        int k = 3;
-                    }
+                if (value == 5) {
+                    int k = 3;
+                }
 
-                    tree->insert(value);
-                    addValue.push_back(value);
-                
+                tree->insert(value);
+                addValue.push_back(value);
                 
             }
             break;
@@ -225,14 +224,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 //srand(time(NULL));
                 for (int i = 0; i < 1000; i++) {
                     tree = TREE_CLASS::test();
+                    //tree = TREE_CLASS::test(GetDC(hWnd), hWnd);
                 }
 
                 sp->printToFile();
 
                 delete (sp);
                 
-                
-
                 //tree = TREE_CLASS::singleCaseTest(7169);
             }
 

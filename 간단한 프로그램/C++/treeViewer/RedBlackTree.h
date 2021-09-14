@@ -118,8 +118,8 @@ FIN:
 
 #ifdef _WINDOWS_
 
-	static const int addNum = 30;
-	static const int eraseNum = 15;
+	static const int addNum = 100;
+	static const int eraseNum = 50;
 
 	static CRedBlackTree<int>* singleCaseTest(int seed) {
 		static CRedBlackTree<int>* tree = nullptr;
