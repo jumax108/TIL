@@ -214,7 +214,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             case 't':
             {
-                tree = TREE_CLASS::test();
+                
+                srand(time(NULL));
+                for (int i = 0; i < 1000; i++) {
+                    tree = TREE_CLASS::test();
+                }
+                
+                //tree = TREE_CLASS::singleCaseTest(7169);
             }
 
             break;

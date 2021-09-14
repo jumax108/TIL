@@ -54,6 +54,7 @@ public:
 					node->_right = newNode;
 					newNode->_parent = node;;
 					insertBalance(newNode);
+					diagnosis(_root);
 					return;
 				}
 				node = node->_right;
@@ -64,11 +65,14 @@ public:
 					node->_left = newNode;
 					newNode->_parent = node;
 					insertBalance(newNode);
+					diagnosis(_root);
 					return;
 				}
 				node = node->_left;
 			}
 		}
+
+		
 
 		delete(newNode);
 	}
@@ -93,6 +97,7 @@ public:
 				stNode* erasedNode = eraseNode(node, &isRed);
 				if (isRed == false) {
 					eraseBalance(erasedNode);
+					diagnosis(_root);
 				}
 				break;
 			}
@@ -102,16 +107,15 @@ public:
 
 #ifdef _WINDOWS_
 
-	static CRedBlackTree<int>* test() {
+	static const int addNum = 30;
+	static const int eraseNum = 15;
 
-
+	static CRedBlackTree<int>* singleCaseTest(int seed) {
 		static CRedBlackTree<int>* tree = nullptr;
 
 		static std::vector<int>* addNumList = nullptr;
 		static std::vector<int>* eraseIndexList = nullptr;
 
-		constexpr int addNum = 10;
-		constexpr int eraseNum = 5;
 
 		static std::vector<int>* ableNumList = nullptr;
 
@@ -120,9 +124,9 @@ public:
 
 		if (addNumList == nullptr) {
 
-			srand(time(NULL));
+
 			//int seed = rand() % 10000;
-			int seed = 104;
+			//int seed = 1449;
 			printf("seed : %d\n", seed);
 			srand(seed);
 
@@ -138,12 +142,144 @@ public:
 				ableNumList->push_back(numCnt);
 			}
 
+			printf("add num: ");
 			for (int numCnt = 0; numCnt < addNum; numCnt++) {
 				int index = rand() % ableNumList->size();
 				addNumList->push_back(ableNumList->at(index));
+				printf("%d ", ableNumList->at(index));
 				answerList.push_back(ableNumList->at(index));
 				ableNumList->erase(ableNumList->begin() + index);
 			}
+			printf("\n");
+
+			for (int indexCnt = 0; indexCnt < eraseNum; ++indexCnt) {
+				int index = rand() % (addNum - indexCnt);
+				eraseIndexList->push_back(index);
+				answerList.erase(answerList.begin() + index);
+			}
+
+			std::sort(answerList.begin(), answerList.end());
+
+			addNumListIter = addNumList->begin();
+			eraseIndexListIter = eraseIndexList->begin();
+
+			printf("answer: ");
+			for (std::vector<int>::iterator answerIter = answerList.begin(); answerIter != answerList.end(); ++answerIter) {
+
+				printf("%d ", *answerIter);
+
+			}
+			printf("\n");
+
+		}
+
+		if (addNumListIter != addNumList->end()) {
+
+
+			tree->insert(*addNumListIter);
+			++addNumListIter;
+			singleCaseTest(seed);
+			return tree;
+
+		}
+
+		if (eraseIndexListIter != eraseIndexList->end()) {
+
+			tree->erase(addNumList->at(*eraseIndexListIter));
+			addNumList->erase(addNumList->begin() + *eraseIndexListIter);
+			++eraseIndexListIter;
+			addNumListIter = addNumList->end();
+			//test();
+			return tree;
+
+		}
+
+		std::vector<int> treeData;
+		std::vector<int> blackNodeNum;
+		tree->treeToList(&treeData, &blackNodeNum, tree->_root);
+
+		std::vector<int>::iterator treeIter;
+		std::vector<int>::iterator numIter;
+		sort(addNumList->begin(), addNumList->end());
+
+		for (treeIter = treeData.begin(), numIter = addNumList->begin(); treeIter != treeData.end(); ++treeIter, ++numIter) {
+			if (*treeIter != *numIter) {
+				break;
+			}
+		}
+		if (treeIter != treeData.end()) {
+			printf("트리의 데이터가 예측된 데이터가 아님\n");
+			system("PAUSE>NUL");
+		}
+
+		std::vector<int>::iterator blackCntIter;
+		for (blackCntIter = blackNodeNum.begin() + 1; blackCntIter != blackNodeNum.end(); ++blackCntIter) {
+			if (*blackCntIter != blackNodeNum[0]) {
+				break;
+			}
+		}
+
+		if (blackCntIter != blackNodeNum.end()) {
+			printf("각 경로의 검정 노드 수가 일치하지 않습니다.");
+			system("PAUSE>NUL");
+		}
+
+
+		delete(addNumList);
+		addNumList = nullptr;
+		delete(eraseIndexList);
+		eraseIndexList = nullptr;
+		//delete(tree);
+		//tree = nullptr;
+		delete(ableNumList);
+		ableNumList = nullptr;
+
+		tree = test();
+
+		return tree;
+	}
+
+	static CRedBlackTree<int>* test() {
+
+		static CRedBlackTree<int>* tree = nullptr;
+
+		static std::vector<int>* addNumList = nullptr;
+		static std::vector<int>* eraseIndexList = nullptr;
+
+		static std::vector<int>* ableNumList = nullptr;
+
+		static std::vector<int>::iterator addNumListIter;
+		static std::vector<int>::iterator eraseIndexListIter;
+
+		if (addNumList == nullptr) {
+
+			
+			int seed = rand() % 10000;
+			//int seed = 1449;
+			printf("seed : %d\n", seed);
+			srand(seed);
+
+			delete(tree);
+			tree = new CRedBlackTree();
+			addNumList = new std::vector<int>();
+			eraseIndexList = new std::vector<int>();
+			ableNumList = new std::vector<int>();
+
+			std::vector<int> answerList;
+
+			for (int numCnt = 0; numCnt < addNum; numCnt++) {
+				ableNumList->push_back(numCnt);
+			}
+
+			printf("add num: ");
+			for (int numCnt = 0; numCnt < addNum; numCnt++) {
+				int index = rand() % ableNumList->size();
+				addNumList->push_back(ableNumList->at(index));
+				printf("%d ", ableNumList->at(index));
+				answerList.push_back(ableNumList->at(index));
+				ableNumList->erase(ableNumList->begin() + index);
+			}
+			printf("\n");
 
 			for (int indexCnt = 0; indexCnt < eraseNum; ++indexCnt) {
 				int index = rand() % (addNum - indexCnt);
@@ -171,6 +307,7 @@ public:
 			
 			tree->insert(*addNumListIter);
 			++addNumListIter;
+			test();
 			return tree;
 
 		} 
@@ -181,10 +318,44 @@ public:
 			addNumList->erase(addNumList->begin() + *eraseIndexListIter);
 			++eraseIndexListIter;
 			addNumListIter = addNumList->end();
+			test();
 			return tree;
 
 		}
 		
+		std::vector<int> treeData;
+		std::vector<int> blackNodeNum;
+		tree->treeToList(&treeData, &blackNodeNum, tree->_root);
+
+		std::vector<int>::iterator treeIter;
+		std::vector<int>::iterator numIter;
+		sort(addNumList->begin(), addNumList->end());
+
+		for (treeIter = treeData.begin(), numIter = addNumList->begin(); treeIter != treeData.end(); ++treeIter, ++numIter) {
+			if (*treeIter != *numIter) {
+				break;
+			}
+		}
+
+		if (treeIter != treeData.end()) {
+			printf("트리의 데이터가 예측된 데이터가 아님\n");
+			system("PAUSE>NUL");
+		}
+		
+		std::vector<int>::iterator blackCntIter;
+		for (blackCntIter = blackNodeNum.begin() + 1; blackCntIter != blackNodeNum.end(); ++blackCntIter) {
+			if (*blackCntIter != blackNodeNum[0]) {
+				break;
+			}
+		}
+
+		if (blackCntIter != blackNodeNum.end()) {
+			printf("각 경로의 검정 노드 수가 일치하지 않습니다.");
+			system("PAUSE>NUL");
+		}
+
+
+
 		delete(addNumList);
 		addNumList = nullptr;
 		delete(eraseIndexList);
@@ -194,7 +365,7 @@ public:
 		delete(ableNumList);
 		ableNumList = nullptr;
 
-		tree = test();
+		//tree = test();
 
 		return tree;
 	}
@@ -210,58 +381,6 @@ public:
 
 	}
 
-	static CRedBlackTree<T>* test(HDC hdc, HWND hWnd) {
-
-		srand(908);
-
-		constexpr int dataNum = 10;
-		constexpr int eraseNum = 3;
-
-		std::vector<int> insertData;
-		std::vector<int> eraseIndex;
-		std::vector<int> ableData;
-
-		CRedBlackTree<int>* tree = new CRedBlackTree<int>();
-
-		for (int dataCnt = 0; dataCnt < dataNum; ++dataCnt) {
-			ableData.push_back(dataCnt);
-		}
-
-		printf("Insert Data: ");
-		for (int dataCnt = 0; dataCnt < dataNum; ++dataCnt) {
-			int index = rand() % ableData.size();
-			int data = ableData[index];
-			ableData.erase(ableData.begin() + index);
-			insertData.push_back(data);
-			tree->insert(data);
-			printf("%d ", data);
-		}
-		printf("\n");
-
-		for (int eraseCnt = 0; eraseCnt < eraseNum; ++eraseCnt) {
-			eraseIndex.push_back(rand() % (dataNum - eraseCnt));
-		}
-
-		for (std::vector<int>::iterator erase = eraseIndex.begin(); erase != eraseIndex.end(); ++erase) {
-
-			InvalidateRect(hWnd, nullptr, true);
-			tree->print(hdc);
-
-			int data = *(insertData.begin() + *erase);
-			insertData.erase(insertData.begin() + *erase);
-			tree->erase(data);
-
-		}
-
-		std::sort(insertData.begin(), insertData.end());
-		printf("correct answer: ");
-		for (std::vector<int>::iterator data = insertData.begin(); data != insertData.end(); ++data) {
-			printf("%d ", *data);
-		}
-		printf("\n");
-
-		return tree;
-	}
 #endif
 
 private:
@@ -354,6 +473,10 @@ private:
 
 	void insertBalance(stNode* node) {
 
+		if (node->_data == 3) {
+			int k = 3;
+		}
+
 		// 노드가 루트면 탈출
 		if (node == _root) {
 			node->_isRed = false;
@@ -417,6 +540,7 @@ private:
 
 					// 부모 오른쪽을 닐노드로 변경
 					parent->_right = node->_left;
+					node->_left->_parent = parent;
 
 					// 노드 왼쪽으로 부모를 이동
 					node->_left = parent;
@@ -445,6 +569,7 @@ private:
 
 					// 부모 왼쪽을 닐노드로 변경
 					parent->_left = node->_right;
+					node->_right->_parent = parent;
 
 					// 노드 오른쪽으로 부모를 이동
 					node->_right = parent;
@@ -504,6 +629,53 @@ private:
 
 	}
 
+	void leftRotation(stNode* parent, stNode* right) {
+
+		right->_parent = parent->_parent;
+		if (parent->_parent != nullptr) {
+			if (parent->_parent->_left == parent) {
+				parent->_parent->_left = right;
+			}
+			else {
+				parent->_parent->_right = right;
+			}
+		}
+		else {
+			_root = right;
+		}
+
+		parent->_right = right->_left;
+		right->_left->_parent = parent;
+
+		right->_left = parent;
+		parent->_parent = right;
+
+	}
+
+	void rightRotation(stNode* parent, stNode* left) {
+
+		left->_parent = parent->_parent;
+		if (parent->_parent != nullptr) {
+			if (parent->_parent->_left == parent) {
+				parent->_parent->_left = left;
+			}
+			else {
+				parent->_parent->_right = left;
+			}
+		}
+		else {
+			_root = left;
+		}
+
+		parent->_left = left->_right;
+		left->_right->_parent = parent;
+
+		left->_right = parent;
+		parent->_parent = left;
+
+
+	}
+
 	void eraseBalance(stNode* node) {
 
 		if (node == _root) {
@@ -537,79 +709,70 @@ private:
 				return;
 			}
 
-			if (sibling->_left->_isRed == false && sibling->_right->_isRed == false) {
+			if (sibling->_isRed == false) {
+				// 형제가 검정색 일 때
+				if (sibling->_left->_isRed == false && sibling->_right->_isRed == false) {
+					// 형제의 자식도 모두 검정일 때
+					if (_isNodeLeftParent == true) {
+						leftRotation(parent, sibling);
+					}
+					else {
+						rightRotation(parent, sibling);
+					}
+					return;
+				}
+
+				if (sibling->_left->_isRed == true && sibling->_right->_isRed == true) {
+					// 형제 자식 모두 빨강일 때
+					sibling->_isRed = true;
+					parent->_isRed = false;
+					if (_isNodeLeftParent == true) {
+						sibling->_right->_isRed = false;
+						leftRotation(parent, sibling);
+					}
+					else {
+						sibling->_left->_isRed = false;
+						rightRotation(parent, sibling);
+					}
+					return;
+				}
+
+				stNode* left = sibling->_left;
+				stNode* right = sibling->_right;
+
+				if (_isNodeLeftParent == true) {
+
+					// 노드가 부모의 왼쪽에 있을 때
+					if (left->_isRed == true) {
+						// 형제의 좌측 노드가 빨강이면
+						sibling->_isRed = true;
+						left->_isRed = false;
+						rightRotation(sibling, left);
+						sibling = left;
+					}
+
+					// 형제의 우측 자식이 빨강이면
+					leftRotation(parent, sibling);
+
+				}
+				else {
+					// 노드가 부모의 오른쪽에 있을 때
+					if (right->_isRed == true) {
+						// 형제의 우측 노드가 빨강이면
+						sibling->_isRed = true;
+						right->_isRed = false;
+						leftRotation(sibling, right);
+						sibling = right;
+					}
+
+					// 형제의 좌측 노드가 빨강이면
+					rightRotation(parent, sibling);
+				}
 				return;
 			}
 
-			// 형제를 빨강으로 변경했는데, 형제의 자식도 빨간색이 있을 경우
 			
-
-			stNode* left = sibling->_left;
-			stNode* right = sibling->_right;
-
-			if (left->_isRed == true && right->_isRed == false) {
-				// 형제의 좌측 자식이 빨강
-
-				// 형제 - 형제 자식 간 회전
-
-				sibling->_isRed = true;
-				left->_isRed = false;
-
-				if (_isNodeLeftParent == true) {
-					parent->_right = left;
-				}
-				else {
-					parent->_left = left;
-				}
-				left->_parent = parent;
-
-				sibling->_left = left->_right;
-				left->_right->_parent = sibling;
-
-				left->_right = sibling;
-				sibling->_parent = left;
-
-				sibling = left;
-
-			}
-
-			// 형제의 우측 자식이 빨강
-			
-			// 부모 - 자식 간 회전
-
-			if (parent->_parent != nullptr) {
-				if (parent->_parent->_left == parent) {
-					parent->_parent->_left = sibling;
-				}
-				else {
-					parent->_parent->_right = sibling;
-				}
-				sibling->_parent = parent->_parent;
-			}
-			else {
-				sibling->_parent = nullptr;
-			}
-
-			if (_isNodeLeftParent == true) {
-				
-				// 좌회전
-				parent->_right = sibling->_left;
-				sibling->_left->_parent = parent;
-
-				sibling->_left = parent;
-				parent->_parent = sibling;
-
-
-			}
-			else {
-
-				// 우회전
-				parent->_left = sibling->_right;
-				sibling->_right->_parent = parent;
-
-				sibling->_right = parent;
-				parent->_parent = sibling;
-			}
+		
 
 			return;
 
@@ -620,9 +783,13 @@ private:
 		if (sibling->_isRed == false) {
 			// 형제가 검정일 경우
 
-			if (sibling->_isNill == false) {
-				sibling->_isRed = true;
+			if (sibling->_isNill == true) {
+				return;
+			}
 
+			if (_isNodeLeftParent == true) {
+
+				// 형제가 우측에 있을 경우
 				if (sibling->_left->_isRed == true) {
 
 					// 형제의 좌측 자식이 빨강일 경우
@@ -633,16 +800,7 @@ private:
 
 					sibling->_isRed = true;
 					left->_isRed = false;
-
-					parent->_right = left;
-					left->_parent = parent;
-
-					sibling->_left = left->_right;
-					left->_right->_parent = sibling;
-
-					left->_right = sibling;
-					sibling->_parent = left;
-
+					rightRotation(sibling, left);
 					sibling = parent->_right;
 
 				}
@@ -651,50 +809,39 @@ private:
 
 					// 형제의 우측 자식이 빨강일 경우
 					sibling->_right->_isRed = false;
-
-					// 부모의 부모와의 연결
-					if (parent->_parent != nullptr) {
-						if (parent->_parent->_left == parent) {
-
-							parent->_parent->_left = sibling;
-
-						}
-						else {
-							parent->_parent->_right = sibling;
-						}
-						sibling->_parent = parent->_parent;
-					}
-					else {
-						sibling->_parent = nullptr;
-					}
-
-					if (_isNodeLeftParent == true) {
-						// 부모 - 자식 간 좌회전
-
-						// 형제의 왼쪽 자식 던지기
-						parent->_right = sibling->_left;
-						sibling->_left->_parent = parent;
-
-						// 부모 형제 연결
-						sibling->_left = parent;
-						parent->_parent = sibling;
-
-					}
-					else {
-						// 부모 - 자식 간 우회전
-
-						// 형제의 왼쪽 자식 던지기
-						parent->_left = sibling->_right;
-						sibling->_right->_parent = parent;
-
-						// 부모 형제 연결
-						sibling->_right = parent;
-						parent->_parent = sibling;
-					}
+					leftRotation(parent, sibling);
+					//eraseBalance(parent);
 
 					return;
 				}
 			}
+			else {
+				// 형제가 좌측에 있을 경우
+				if (sibling->_right->_isRed == true) {
+					// 형제의 우측 자식이 빨강일 경우
+
+					// 형제 - 형제의 자식 간 좌회전
+					stNode* left = sibling->_left;
+					stNode* right = sibling->_right;
+
+					sibling->_isRed = true;
+					right->_isRed = false;
+					leftRotation(sibling, right);
+					sibling = parent->_left;
+				}
+				if (sibling->_left->_isRed == true) {
+
+					// 형제의 좌측 자식이 빨강일 경우
+					sibling->_left->_isRed = false;
+					rightRotation(parent, sibling);
+					//eraseBalance(parent);
+
+					return;
+				}
+				
+				
+			}
+			sibling->_isRed = true;
 			eraseBalance(parent);
 			return;
 		}
@@ -702,54 +849,134 @@ private:
 		if (sibling->_isRed == true) {
 			// 형제가 빨강일 경우
 
-			if (sibling->_left->_isNill == false) {
-				sibling->_left->_isRed = true;
-			}
+			sibling->_isRed = false;
+			parent->_isRed = true;
 
-			// 조부모의 자식 노드를 형제로 변경
-			if (parent->_parent != nullptr) {
-				if (parent->_parent->_left == parent) {
-					parent->_parent->_left = sibling;
-				}
-				else {
-					parent->_parent->_right = sibling;
-				}
-				sibling->_parent = parent->_parent;
-			}
-			else {
-				sibling->_parent = nullptr;
-				_root = sibling;
-			}
 
 			if (_isNodeLeftParent == true) {                                                                                                                                      
 				// 부모 형제간 좌회전
 				sibling->_isRed = false;
-
-				parent->_right = sibling->_left; // 부모의 오른 자식을 형제의 왼자식으로 변경
-				sibling->_left->_parent = parent; // 형제의 자식의 부모를 부모로 변경
-
-				parent->_parent = sibling;// 부모의 부모를 형제로 변경
-				sibling->_left = parent; // 형제의 왼자식을 부모로 변경
+				leftRotation(parent, sibling);
 			}
 			else {
 
 				// 부모 형제간 우회전
-				sibling->_isRed = false;
-
-				parent->_left = sibling->_right; // 부모의 왼자식을 형제의 오른자식으로 변경
-				sibling->_right->_parent = parent; // 형제의 자식의 부모를 부모로 변경
-
-				parent->_parent = sibling;// 조부모를 형제로 변경
-				sibling->_right = parent; // 형제의 오른자식을 부모로 변경
+				rightRotation(parent, sibling);
 			}
 
-			
+			eraseBalance(node);
 
 		}
 
 
 	}
 
+	void diagnosis(stNode* node = _root) {
+
+		if (node->_left != nullptr) {
+
+			if (node->_left->_parent != node) {
+				// left의 부모가 내가 아닐 경우
+				printf("{\n");
+				printf("\t좌측 노드의 부모가 현재 노드가 아닙니다.\n");
+				printf("\t현재 노드 값 : %d\n", node->_data);
+				printf("\t좌측 노드 값 : %d\n", node->_left->_data);
+				printf("\t좌측 노드 부모 값 : %d\n", node->_left->_parent->_data);
+				printf("}\n");
+				system("PAUSE>NUL");
+			}
+
+			if (node->_isRed == true) {
+				if (node->_left->_isRed == true) {
+
+					printf("{\n");
+					printf("\t나와 내 왼쪽 노드가 빨강입니다.\n");
+					printf("\tnode data: %d\n", node->_data);
+					printf("}\n");
+					system("PAUSE>NUL");
+				}
+			}
+
+			diagnosis(node->_left);
+		}
+		else if (node->_isNill == false) {
+			// left가 널인데, 내가 닐 노드가 아니면 오류
+			printf("{\n");
+			printf("\t좌측 노드가 Null 이지만 내가 닐 노드가 아닙니다.\n");
+			printf("\tnode data: %d\n", node->_data);
+			printf("}\n");
+			system("PAUSE>NUL");
+		}
+
+		//printf("중위 순회, 현재 노드 값: %d\n", node->_data);
+
+		if (node->_isNill == true) {
+			if (node->_isRed == true) {
+				// 닐노드 색 변경
+				printf("{\n");
+				printf("\tNill 노드가 빨강색입니다.\n");
+				printf("\tnode data: %d\n", node->_data);
+				printf("}\n");
+				system("PAUSE>NUL");
+			}
+		}
+
+		if (node->_right != nullptr) {
+
+			if (node->_right->_parent != node) {
+				// right의 부모가 내가 아닐 경우
+				printf("{\n");
+				printf("\t우측 노드의 부모가 현재 노드가 아닙니다.\n");
+				printf("\t현재 노드 값 : %d\n", node->_data);
+				printf("\t우측 노드 값 : %d\n", node->_right->_data);
+				printf("\t우측 노드 부모 값 : %d\n", node->_right->_parent->_data);
+				printf("}\n");
+				system("PAUSE>NUL");
+			}
+
+			if (node->_isRed == true) {
+				if (node->_right->_isRed == true) {
+
+					printf("{\n");
+					printf("\t나와 내 오른 노드가 빨강입니다.\n");
+					printf("\tnode data: %d\n", node->_data);
+					printf("}\n");
+					system("PAUSE>NUL");
+				}
+			}
+
+			diagnosis(node->_right);
+		}
+		else if (node->_isNill == false) {
+			// right가 널인데, 내가 닐 노드가 아니면 오류
+			printf("{\n");
+			printf("\t우측 노드가 Null 이지만 내가 닐 노드가 아닙니다.\n");
+			printf("\tnode data: %d\n", node->_data);
+			printf("}\n");
+			system("PAUSE>NUL");
+		}
+
+	}
+
+	void treeToList(std::vector<T>* vector, std::vector<T>* blackNumList, stNode* node, int blackNum = 0) {
+		blackNum += (node->_isRed == false);
+		if (node->_left->_isNill == false) {
+			treeToList(vector, blackNumList, node->_left, blackNum);
+		}
+		else {
+			blackNumList->push_back(blackNum);
+		}
+
+		vector->push_back(node->_data);
+
+		if (node->_right->_isNill == false) {
+			treeToList(vector, blackNumList, node->_right, blackNum );
+		}
+		else {
+			blackNumList->push_back(blackNum);
+		}
+
+	}
 
 #ifdef _WINDOWS_
 	HDC _hdc;
