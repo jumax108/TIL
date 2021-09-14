@@ -15,3 +15,4 @@
 #include <tchar.h>
 #include <malloc.h>
 #include <windowsx.h>
+#include <stdio.h>

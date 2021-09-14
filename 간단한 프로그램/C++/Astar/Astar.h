@@ -2,6 +2,8 @@
 
 #define abs(x) ((x)<0?-(x):(x))
 
+class SimpleProfiler;
+
 class CAstar {
 
 public:
@@ -44,7 +46,7 @@ public:
 	stCoord* endPoint(int y, int x);
 	inline stCoord* endPoint() { return _end; }
 
-	void pathFind();
+	stNode* pathFind();
 	void pathFindInit();
 	stNode* pathFindSingleLoop();
 
@@ -70,6 +72,8 @@ private:
 
 	linkedList<stNode*> _openList;
 	linkedList<stNode*> _closeList;
+
+	SimpleProfiler* sp = nullptr;
 
 	bool checkList(linkedList<stNode*> *list, stNode* node);
 	bool checkList(linkedList<stNode*> *list, int y, int x);

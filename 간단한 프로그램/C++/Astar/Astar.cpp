@@ -4,6 +4,8 @@
 
 #include "Astar.h"
 
+#include "SimpleProfiler.h"
+
 CAstar::CAstar(int width, int height, int blockSize) {
 	_width = width;
 	_height = height;
@@ -45,7 +47,9 @@ CAstar::stCoord* CAstar::endPoint(int y, int x) {
 
 }
 
-void CAstar::pathFind() {
+CAstar::stNode* CAstar::pathFind() {
+
+	sp = new SimpleProfiler();
 
 	pathFindInit();
 
@@ -57,16 +61,13 @@ void CAstar::pathFind() {
 
 	} while ((int)result == 1);
 
-	do {
-		if (result == nullptr) {
-			// 경로 없음
-			break;
-		}
-		// 경로 있음
-		
-	} while (false);
+	sp->printToFile();
 
+	delete(sp);
+	sp = nullptr;
+	
 	// 마무리
+	return (stNode*)result;
 
 }
 
@@ -119,6 +120,9 @@ bool CAstar::checkMakeNode(int y, int x) {
 
 CAstar::stNode* CAstar::pathFindSingleLoop() {
 
+	if(sp != nullptr)
+		sp->profileBegin("logic");
+
 	int min = 1 << 30;
 	stNode* node = nullptr;
 	linkedList<stNode*>::iterator nodeIter;
@@ -136,6 +140,8 @@ CAstar::stNode* CAstar::pathFindSingleLoop() {
 	_closeList.push_back(node);
 
 	if (node->_coord->_y == _end->_y && node->_coord->_x == _end->_x) {
+		if (sp != nullptr)
+			sp->profileEnd("logic");
 		return node;
 	}
 
@@ -187,11 +193,14 @@ CAstar::stNode* CAstar::pathFindSingleLoop() {
 		}
 
 	}
-
 	if (_openList.empty() == false) {
+		if (sp != nullptr)
+			sp->profileEnd("logic");
 		return (stNode*)1;
 	}
 
+	if (sp != nullptr)
+		sp->profileEnd("logic");
 	return nullptr;
 
 }

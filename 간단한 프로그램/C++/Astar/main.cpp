@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "resource.h"
 
+#include "SimpleProfiler.h"
 #include "myLinkedList.h"
 #include "Astar.h"
 
@@ -161,7 +162,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         break;
     case WM_CREATE:
-        aStar = new CAstar(width, height, blockSize);
+        aStar = new CAstar(width, height, blockSize); 
+        AllocConsole();
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
         break;
     case WM_COMMAND:
         {
@@ -281,6 +284,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 aStar = new CAstar(width, height, blockSize);
                 KillTimer(hWnd, 0);
                 endNode = nullptr;
+                InvalidateRect(hWnd, nullptr, true);
+                break;
+            case 'f':
+                endNode = aStar->pathFind();
                 InvalidateRect(hWnd, nullptr, true);
                 break;
             }
