@@ -5,10 +5,14 @@
 #include "treeViewer.h"
 
 #include "tree.h"
+#include "SimpleProfiler.h"
 #include "RedBlackTree.h"
 
-//using TREE_CLASS = CBinaryTree<int>;
-using TREE_CLASS = CRedBlackTree<int>;
+
+SimpleProfiler* sp;
+
+using TREE_CLASS = CBinaryTree<int>;
+//using TREE_CLASS = CRedBlackTree<int>;
 
 TREE_CLASS* tree;
 
@@ -215,11 +219,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case 't':
             {
                 
-                srand(time(NULL));
+                sp = new SimpleProfiler();
+
+                srand(1000);
+                //srand(time(NULL));
                 for (int i = 0; i < 1000; i++) {
                     tree = TREE_CLASS::test();
                 }
+
+                sp->printToFile();
+
+                delete (sp);
                 
+                
+
                 //tree = TREE_CLASS::singleCaseTest(7169);
             }
 

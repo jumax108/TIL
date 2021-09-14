@@ -1,5 +1,7 @@
 #pragma once
 
+class SimpleProfiler;
+
 
 template<typename T>
 class CBinaryTree {

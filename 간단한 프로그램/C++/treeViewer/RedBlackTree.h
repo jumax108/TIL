@@ -1,5 +1,9 @@
 #pragma once
 
+class SimpleProfiler;
+
+extern SimpleProfiler* sp;
+
 template<typename T>
 class CRedBlackTree {
 
@@ -37,48 +41,55 @@ public:
 
 	void insert(T data) {
 
-		stNode* newNode = new stNode(data);
+		sp->profileBegin("insert");
 
-		if (_root->_isNill == true) {
-			delete(_root);
-			newNode->_isRed = false;
-			_root = newNode;
-			return;
-		}
+		do {
+			stNode* newNode = new stNode(data);
 
-		stNode* node = _root;
-		while (node->_data != data) {
-			if (node->_data < data) {
-				if (node->_right->_isNill == true) {
-					delete(node->_right);
-					node->_right = newNode;
-					newNode->_parent = node;;
-					insertBalance(newNode);
-					diagnosis(_root);
-					return;
-				}
-				node = node->_right;
+			if (_root->_isNill == true) {
+				delete(_root);
+				newNode->_isRed = false;
+				_root = newNode;
+				break;
 			}
-			else if (node->_data > data) {
-				if (node->_left->_isNill == true) {
-					delete(node->_left);
-					node->_left = newNode;
-					newNode->_parent = node;
-					insertBalance(newNode);
-					diagnosis(_root);
-					return;
+
+			stNode* node = _root;
+			while (node->_data != data) {
+				if (node->_data < data) {
+					if (node->_right->_isNill == true) {
+						delete(node->_right);
+						node->_right = newNode;
+						newNode->_parent = node;;
+						insertBalance(newNode);
+						//diagnosis(_root);
+						goto FIN;
+					}
+					node = node->_right;
 				}
-				node = node->_left;
+				else if (node->_data > data) {
+					if (node->_left->_isNill == true) {
+						delete(node->_left);
+						node->_left = newNode;
+						newNode->_parent = node;
+						insertBalance(newNode);
+						//diagnosis(_root);
+						//break;
+						goto FIN;
+					}
+					node = node->_left;
+				}
 			}
-		}
+			delete(newNode);
+		} while (false);
 
-		
+FIN:
 
-		delete(newNode);
+		sp->profileEnd("insert");
 	}
 
 	void erase(T data) {
 
+		sp->profileBegin("erase");
 		stNode** node = &_root;
 
 		while ((*node)->_isNill == false) {
@@ -97,12 +108,12 @@ public:
 				stNode* erasedNode = eraseNode(node, &isRed);
 				if (isRed == false) {
 					eraseBalance(erasedNode);
-					diagnosis(_root);
+					//diagnosis(_root);
 				}
 				break;
 			}
 		}
-
+		sp->profileEnd("erase");
 	}
 
 #ifdef _WINDOWS_

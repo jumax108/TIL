@@ -33,9 +33,15 @@
     <ClInclude Include="RedBlackTree.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="SimpleProfiler.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="treeViewer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleProfiler.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
