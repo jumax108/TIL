@@ -290,7 +290,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 endNode = aStar->pathFind();
                 InvalidateRect(hWnd, nullptr, true);
                 break;
+            case 't':
+                srand(1000);
+                for (int loopCnt = 0; loopCnt < 1; ++loopCnt) {
+                    printf("loopCnt: %d\n", loopCnt);
+                    WCHAR fileName[50];
+                    swprintf_s(fileName, 50, L".\\testImage\\result%04d.bmp", loopCnt);
+
+                    CAstar::test(blockSize, fileName);
+                }
+                break;
+            case 'p':
+                //aStar->printMapToBitmap(L"result.bmp");
+                break;
             }
+
         }
         break;
     case WM_DESTROY:

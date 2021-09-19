@@ -56,8 +56,21 @@ public:
 	inline MAP_STATE& map(int y, int x) {
 		return _map[y * _width + x];
 	}
+	inline stNode* node(int y, int x) {
+		return &_node[y * _width + x];
+	}
+	inline stNode* node(int y, int x, stNode* node) {
+		stNode* selectedNode = &_node[y * _width + x];
+		selectedNode->_coord = node->_coord;
+		selectedNode->_distance = node->_distance;
+		selectedNode->_moveCnt = node->_moveCnt;
+		selectedNode->_parent = node->_parent;
+		return selectedNode;
+	}
 
 	void listClear();
+
+	static void test(int blockSize,  const WCHAR* fileName);
 
 private:
 
@@ -66,12 +79,13 @@ private:
 	int _blockSize;
 
 	MAP_STATE* _map;
+	stNode* _node;
 
 	stCoord* _start;
 	stCoord* _end;
 
 	linkedList<stNode*> _openList;
-	linkedList<stNode*> _closeList;
+	//linkedList<stNode*> _closeList;
 
 	SimpleProfiler* sp = nullptr;
 
@@ -83,6 +97,8 @@ private:
 public:
 
 #ifdef _WINDOWS_
+
+	void printMapToBitmap(const WCHAR* fileName, stNode* endNode, int printRatio = 10);
 
 	void print(HDC hdc) {
 
@@ -138,12 +154,12 @@ public:
 		{
 			HBRUSH hBrush = CreateSolidBrush(RGB(255, 120, 40));
 			HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-
+			/*
 			for (linkedList<stNode*>::iterator iter = _closeList.begin(); iter != _closeList.end(); ++iter) {
 				stCoord* coord = (*iter)->_coord;
 				Rectangle(hdc, coord->_x * _blockSize + 1, coord->_y * _blockSize + 1, coord->_x * _blockSize + _blockSize, coord->_y * _blockSize + _blockSize);
 			}
-
+			*/
 			SelectObject(hdc, hOldBrush);
 			DeleteObject(hBrush);
 		}
