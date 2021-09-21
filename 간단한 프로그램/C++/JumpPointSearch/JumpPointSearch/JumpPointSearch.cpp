@@ -21,6 +21,7 @@ CJumpPointSearch::CJumpPointSearch(int width, int height) {
 
 void CJumpPointSearch::pathFindInit() {
 
+	listClear();
 	_openList->push_back(new stNode(nullptr, 0, abs(_end._x - _start._x) + abs(_end._y - _start._y), new stCoord(_start._y, _start._x)));
 
 }
@@ -510,8 +511,8 @@ CJumpPointSearch::stCoord* CJumpPointSearch::checkDiagonal(DIRECTION dir, int y,
 		// 그래서 이동 중 코너 체크를 분리함
 
 		if (0 <= y - ty && y - ty < _height &&
-			0 <= x - tx && x - tx < _width) {
-			if ((*map(y - ty, x) == MAP_STATE::WALL && *map(y - ty, x - tx) == MAP_STATE::ROAD)) {
+			0 <= x + tx && x + tx <  _width) {
+			if ((*map(y - ty, x) == MAP_STATE::WALL && *map(y - ty, x + tx) == MAP_STATE::ROAD)) {
 				// 대각선 이동 중 코너 발견함
 				return new stCoord(y, x, (DIRECTION)((int)dir + (int)DIRECTION::LEFT_UP));
 			}
@@ -549,7 +550,7 @@ linkedList<CJumpPointSearch::stNode*>::iterator* CJumpPointSearch::findMin(linke
 }
 
 #ifdef _WINDOWS_
-void CJumpPointSearch::print(HDC hdc, int blockSize) {
+void CJumpPointSearch::print(HDC hdc, int blockSize, stNode* endNode) {
 	
 	{
 		// 선 그리기
@@ -599,46 +600,6 @@ void CJumpPointSearch::print(HDC hdc, int blockSize) {
 		DeleteObject(hBrush);
 	}
 
-	do{
-		// 시작 지점 그리기
-
-		if (_start._x == -1 || _start._y == -1) {
-			break;
-		}
-		HBRUSH hBrush = CreateSolidBrush(RGB(50, 200, 50));
-		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-
-		int left = _start._x * blockSize + 1;
-		int right = left + blockSize - 1;
-		int top = _start._y * blockSize + 1;
-		int bottom = top + blockSize - 1;
-
-		bool result = Rectangle(hdc, left, top, right, bottom);
-
-		SelectObject(hdc, hOldBrush);
-		DeleteObject(hBrush);
-	} while (false);
-
-	do{
-		// 끝 지점 그리기
-
-		if (_end._x == -1 || _end._y == -1) {
-			break;
-		}
-
-		HBRUSH hBrush = CreateSolidBrush(RGB(200, 50, 50));
-		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-
-		int left = _end._x * blockSize + 1;
-		int right = left + blockSize - 1;
-		int top = _end._y * blockSize + 1;
-		int bottom = top + blockSize - 1;
-
-		bool result = Rectangle(hdc, left, top, right, bottom);
-
-		SelectObject(hdc, hOldBrush);
-		DeleteObject(hBrush);
-	} while (false);
 
 	{
 		// 오픈 리스트 그리기
@@ -686,5 +647,131 @@ void CJumpPointSearch::print(HDC hdc, int blockSize) {
 		SelectObject(hdc, hOldBrush);
 		DeleteObject(hBrush);
 	}
+
+	{
+		// 각 노드의 부모를 이어보자 !
+
+		HPEN hPen = CreatePen(PS_SOLID, 3, RGB(190, 110, 190));
+		HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+
+		if (_closeList->empty() == false) {
+			for (linkedList<stNode*>::iterator iter = _closeList->begin(); iter != _closeList->end(); ++iter) {
+
+				if ((*iter)->_parent == nullptr) {
+					continue;
+				}
+
+				stCoord* coord = (*iter)->_coord;
+				stCoord* parentCoord = (*iter)->_parent->_coord;
+
+				MoveToEx(hdc, coord->_x * blockSize + blockSize / 2, coord->_y* blockSize + blockSize / 2, nullptr);
+				LineTo(hdc, parentCoord->_x* blockSize + blockSize / 2, parentCoord->_y* blockSize + blockSize / 2);
+
+			}
+		}
+
+		if (_openList->empty() == false) {
+			for (linkedList<stNode*>::iterator iter = _openList->begin(); iter != _openList->end(); ++iter) {
+
+				if ((*iter)->_parent == nullptr) {
+					continue;
+				}
+
+				stCoord* coord = (*iter)->_coord;
+				stCoord* parentCoord = (*iter)->_parent->_coord;
+
+				MoveToEx(hdc, coord->_x * blockSize + blockSize / 2, coord->_y * blockSize + blockSize / 2, nullptr);
+				LineTo(hdc, parentCoord->_x * blockSize + blockSize / 2, parentCoord->_y * blockSize + blockSize / 2);
+			}
+		}
+
+		SelectObject(hdc, hOldPen);
+		DeleteObject(hPen);
+	}
+
+	{
+
+		// 확정된 길을 이어봅니다 ~
+
+		HPEN hPen = CreatePen(PS_SOLID, 3, RGB(240, 70, 70));
+		HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+
+		if (endNode != nullptr) {
+
+			stNode* node = endNode;
+			while (node->_parent != nullptr) {
+
+				stCoord* coord = node->_coord;
+				stCoord* parentCoord = node->_parent->_coord;
+
+				MoveToEx(hdc, coord->_x * blockSize + blockSize / 2, coord->_y * blockSize + blockSize / 2, nullptr);
+				LineTo(hdc, parentCoord->_x * blockSize + blockSize / 2, parentCoord->_y * blockSize + blockSize / 2);
+
+				node = node->_parent;
+			}
+
+		}
+
+		SelectObject(hdc, hOldPen);
+		DeleteObject(hPen);
+
+	}
+
+
+	do {
+		// 시작 지점 그리기
+
+		if (_start._x == -1 || _start._y == -1) {
+			break;
+		}
+		HBRUSH hBrush = CreateSolidBrush(RGB(50, 200, 50));
+		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+		int left = _start._x * blockSize + 1;
+		int right = left + blockSize - 1;
+		int top = _start._y * blockSize + 1;
+		int bottom = top + blockSize - 1;
+
+		bool result = Rectangle(hdc, left, top, right, bottom);
+
+		SelectObject(hdc, hOldBrush);
+		DeleteObject(hBrush);
+	} while (false);
+
+	do {
+		// 끝 지점 그리기
+
+		if (_end._x == -1 || _end._y == -1) {
+			break;
+		}
+
+		HBRUSH hBrush = CreateSolidBrush(RGB(200, 50, 50));
+		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+		int left = _end._x * blockSize + 1;
+		int right = left + blockSize - 1;
+		int top = _end._y * blockSize + 1;
+		int bottom = top + blockSize - 1;
+
+		bool result = Rectangle(hdc, left, top, right, bottom);
+
+		SelectObject(hdc, hOldBrush);
+		DeleteObject(hBrush);
+	} while (false);
+
 }
 #endif
+
+void CJumpPointSearch::listClear() {
+
+	for (linkedList<stNode*>::iterator iter = _openList->begin(); iter != _openList->end(); ++iter) {
+		delete(*iter);
+	}
+	for (linkedList<stNode*>::iterator iter = _closeList->begin(); iter != _closeList->end(); ++iter) {
+		delete(*iter);
+	}
+
+	_openList->clear();
+	_closeList->clear();
+
+}

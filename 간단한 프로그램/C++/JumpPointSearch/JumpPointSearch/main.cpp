@@ -126,6 +126,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //
 
+int mapWidth = 35;
+int mapHeight = 20;
+
 int mouseX;
 int mouseY;
 int blockSize;
@@ -133,20 +136,23 @@ int blockSize;
 bool mouseDown;
 CJumpPointSearch::MAP_STATE changeThisState;
 
+CJumpPointSearch::stNode* endNode;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
     case WM_CREATE:
-        jps = new CJumpPointSearch(10, 10);
+        jps = new CJumpPointSearch(mapWidth, mapHeight);
         new (&jps->_end) CJumpPointSearch::stCoord(-1, -1);
         new (&jps->_start) CJumpPointSearch::stCoord(-1, -1);
-        blockSize = 50;
+        blockSize = 30;
         mouseDown = false;
+        endNode = nullptr;
         break;
     case WM_TIMER:
     {
-        CJumpPointSearch::stNode* result = jps->pathFindSingleLoop();
+        void* result = jps->pathFindSingleLoop();
         if ((int)result != 1) {
             KillTimer(hWnd, 1);
             if (result == nullptr) {
@@ -154,6 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else {
                 // 찾음
+                endNode = (CJumpPointSearch::stNode*)result;
             }
         }
         InvalidateRect(hWnd, nullptr, true);
@@ -200,6 +207,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_MBUTTONDOWN:
         break;
     case WM_RBUTTONDOWN:
+        endNode = nullptr;
         jps->pathFindInit();
         SetTimer(hWnd, 1, 200, nullptr);
         break;
@@ -244,6 +252,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 InvalidateRect(hWnd, nullptr, true);
                 break;
             }
+            case 'c':
+            {
+                jps->listClear();
+                InvalidateRect(hWnd, nullptr, true);
+                break;
+            }
+            case 'z':
+            {
+                endNode = nullptr;
+                delete(jps);
+                jps = new CJumpPointSearch(mapWidth, mapHeight);
+                InvalidateRect(hWnd, nullptr, true);
+                break;
+            }
         }
         break;
     }
@@ -252,7 +274,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        jps->print(hdc, blockSize);
+        jps->print(hdc, blockSize, endNode);
         EndPaint(hWnd, &ps);
     }
     break;

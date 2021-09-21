@@ -69,9 +69,11 @@ public:
 	stCoord _start;
 	stCoord _end;
 
+	void listClear();
+
 #ifdef _WINDOWS_
 
-	void print(HDC hdc, int blockSize = 10);
+	void print(HDC hdc, int blockSize = 10, stNode* endNode = nullptr);
 
 #endif
 
