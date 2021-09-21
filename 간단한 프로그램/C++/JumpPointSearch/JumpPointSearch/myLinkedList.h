@@ -99,6 +99,10 @@ public:
 
 	void clear();
 
+	bool empty() {
+		return head.child == &tail;
+	}
+
 	inline _node* begin() {
 		return head.child;
 	}

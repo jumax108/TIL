@@ -144,6 +144,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         blockSize = 50;
         mouseDown = false;
         break;
+    case WM_TIMER:
+    {
+        CJumpPointSearch::stNode* result = jps->pathFindSingleLoop();
+        if ((int)result != 1) {
+            KillTimer(hWnd, 1);
+            if (result == nullptr) {
+                // 못찾음
+            }
+            else {
+                // 찾음
+            }
+        }
+        InvalidateRect(hWnd, nullptr, true);
+    }
+        break;
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -182,10 +197,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 
+    case WM_MBUTTONDOWN:
+        break;
     case WM_RBUTTONDOWN:
         jps->pathFindInit();
-        jps->pathFindSingleLoop();
-        InvalidateRect(hWnd, nullptr, true);
+        SetTimer(hWnd, 1, 200, nullptr);
         break;
     case WM_LBUTTONDOWN: {
         mouseDown = true;

@@ -89,4 +89,6 @@ private:
 
 	stCoord* checkOrthogonal(DIRECTION dir, int y , int x);
 	stCoord* checkDiagonal(DIRECTION dir, int y, int x);
+
+	bool isNodeInList(stCoord* coord, linkedList<stNode*>* list);
 };
