@@ -126,12 +126,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //
 
-int mapWidth = 35;
-int mapHeight = 20;
+int mapWidth;
+int mapHeight;
 
 int mouseX;
 int mouseY;
 int blockSize;
+int timerDelay;
 
 bool mouseDown;
 CJumpPointSearch::MAP_STATE changeThisState;
@@ -143,12 +144,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
+
+        mapWidth = 50;
+        mapHeight = 25;
+        blockSize = 25;
+        timerDelay = 200;
+        mouseDown = false;
+        endNode = nullptr;
+
         jps = new CJumpPointSearch(mapWidth, mapHeight);
         new (&jps->_end) CJumpPointSearch::stCoord(-1, -1);
         new (&jps->_start) CJumpPointSearch::stCoord(-1, -1);
-        blockSize = 30;
-        mouseDown = false;
-        endNode = nullptr;
         break;
     case WM_TIMER:
     {
@@ -209,7 +215,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_RBUTTONDOWN:
         endNode = nullptr;
         jps->pathFindInit();
-        SetTimer(hWnd, 1, 200, nullptr);
+        SetTimer(hWnd, 1, timerDelay, nullptr);
         break;
     case WM_LBUTTONDOWN: {
         mouseDown = true;
@@ -254,18 +260,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             case 'c':
             {
-                jps->listClear();
+
+                endNode = nullptr;
+                KillTimer(hWnd, 1);
+                jps->pathFindInit();
                 InvalidateRect(hWnd, nullptr, true);
                 break;
             }
             case 'z':
             {
                 endNode = nullptr;
+                KillTimer(hWnd, 1);
+                endNode = nullptr;
                 delete(jps);
                 jps = new CJumpPointSearch(mapWidth, mapHeight);
                 InvalidateRect(hWnd, nullptr, true);
                 break;
             }
+            case 't':
+            {
+                CJumpPointSearch::test();
+                MessageBoxW(hWnd, L"테스트 끝 !", L"JumpPointSearch", MB_OK);
+            }
+                break;
         }
         break;
     }
@@ -278,6 +295,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         EndPaint(hWnd, &ps);
     }
     break;
+    case WM_MOUSEWHEEL: {
+        short wheelMove = HIWORD(wParam);
+        if (wheelMove > 0) {
+            blockSize += 1;
+        }
+        else {
+            if (blockSize - 1 > 0) {
+                blockSize -= 1;
+            }
+        }
+        InvalidateRect(hWnd, nullptr, true);
+    }
+        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

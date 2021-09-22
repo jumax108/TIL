@@ -15,3 +15,5 @@
 #include <memory.h>
 #include <tchar.h>
 #include <new>
+#include <time.h>
+#include <stdio.h>
