@@ -844,7 +844,7 @@ CJumpPointSearch::stNode* CJumpPointSearch::pathFind() {
 
 }
 
-void CJumpPointSearch::test() {
+void CJumpPointSearch::test(const WCHAR* fileName) {
 
 	MAP_STATE patterns[2][3][3] = {
 		{
@@ -895,17 +895,17 @@ void CJumpPointSearch::test() {
 	jps->_end._x = width - 1;
 	jps->_end._y = height - 1;
 
-	bool result = jps->pathFind();
+	stNode* result = jps->pathFind();
 	if (result == false) {
 		MessageBoxW(NULL, L"길 찾기 실패", L"JumpPointSearch", MB_OK);
 	}
 
-	jps->printToBitmap(L"result.bmp", 20);
+	jps->printToBitmap(fileName, 20, result);
 
 
 }
 
-void CJumpPointSearch::printToBitmap(const WCHAR* fileName, int printRatio) {
+void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio, stNode* endNode) {
 
 	BITMAPINFOHEADER info;
 	ZeroMemory(&info, sizeof(BITMAPINFOHEADER));
@@ -929,31 +929,86 @@ void CJumpPointSearch::printToBitmap(const WCHAR* fileName, int printRatio) {
 	fwrite(&header, sizeof(BITMAPFILEHEADER), 1, bitmapFile);
 	fwrite(&info, sizeof(BITMAPINFOHEADER), 1, bitmapFile);
 
-	for (int heightCnt = 0; heightCnt < _height; ++heightCnt) {
+	stReverseRGB* rgbData = (stReverseRGB*)malloc(sizeof(stReverseRGB) * _width * printRatio * _height * printRatio);
+	
+	stReverseRGB* singleRgb = rgbData;
+
+	for (int heightCnt = _height - 1; heightCnt >= 0; --heightCnt) {
 		for (int heightRatioCnt = 0; heightRatioCnt < printRatio; ++heightRatioCnt) {
 			for (int widthCnt = 0; widthCnt < _width; ++widthCnt) {
 				for (int widthRatioCnt = 0; widthRatioCnt < printRatio; ++widthRatioCnt) {
 
-					unsigned char bgr[3] = {0,};
+
 					switch (*map(heightCnt, widthCnt)) {
 					case MAP_STATE::ROAD:
-						bgr[0] = 43;
-						bgr[1] = 43;
-						bgr[2] = 43;
+						singleRgb->red = 43;
+						singleRgb->green = 43;
+						singleRgb->blue = 43;
 						break;
 					case MAP_STATE::WALL:
-						bgr[0] = 200;
-						bgr[1] = 200;
-						bgr[2] = 200;
+						singleRgb->red = 200;
+						singleRgb->green = 200;
+						singleRgb->blue = 200;
 						break;
 					}
 
-					fwrite(bgr, 3, 1, bitmapFile);
+					singleRgb += 1;
 				}
 			}
 		}
 	}
 
-	fclose(bitmapFile);
+	// 경로 출력
+	do {
+		//break;
+		if (endNode == nullptr) {
+			break;
+		}
+
+		stNode* node = endNode;
+		while (node->_parent != nullptr) {
+
+			stCoord* coord = node->_coord;
+			int startX = coord->_x * printRatio + printRatio / 4;
+			int startY = (_height - coord->_y - 1) * printRatio + printRatio / 4;
+
+			stCoord* parentCoord = node->_parent->_coord;
+			int endX = parentCoord->_x * printRatio + printRatio / 4;
+			int endY = (_height - parentCoord->_y - 1) * printRatio + printRatio / 4;
+
+			int distanceX = endX - startX;
+			int distanceY = endY - startY;
+
+			int xDirection = (distanceX < 0) * -1 + (distanceX > 0);
+			int yDirection = (distanceY < 0) * -1 + (distanceY > 0);
+
+			while (startX != endX || startY != endY) {
+				for (int heightCnt = startY; heightCnt < startY + printRatio / 2; ++heightCnt) {
+					for (int widthCnt = startX; widthCnt < startX + printRatio / 2; ++widthCnt) {
+						stReverseRGB* rgb = &rgbData[heightCnt * (_width*printRatio) + widthCnt];
+
+						rgb->red = 200;
+						rgb->green = 0;
+						rgb->blue = 0;
+
+					}
+				}
+
+				if (startX != endX) {
+					startX += xDirection;
+				}
+				if (startY != endY) {
+					startY += yDirection;
+				}
+
+			}
+
+			node = node->_parent;
+
+		}
+	} while (false);
+
+	fwrite(rgbData, sizeof(stReverseRGB), _width * printRatio * _height * printRatio, bitmapFile);
+	fclose(bitmapFile); 
 
 }

@@ -26,6 +26,12 @@ public:
 		unsigned char blue;
 	};
 
+	struct stReverseRGB {
+		unsigned char blue;
+		unsigned char green;
+		unsigned char red;
+	};
+
 	struct stCoord {
 		int _x;
 		int _y;
@@ -83,7 +89,7 @@ public:
 
 	void listClear();
 
-	static void test();
+	static void test(const WCHAR* fileName);
 #ifdef _WINDOWS_
 
 	void print(HDC hdc, int blockSize = 10, stNode* endNode = nullptr);
@@ -109,5 +115,5 @@ private:
 	bool isNodeInList(stCoord* coord, linkedList<stNode*>* list);
 
 
-	void printToBitmap(const WCHAR* fileName, int printRatio);
+	void printToBitmap(const WCHAR* fileName, const int printRatio, stNode* endNode);
 };
