@@ -27,7 +27,7 @@ CJumpPointSearch::CJumpPointSearch(int width, int height) {
 	_end._x = -1;
 	_end._y = -1;
 
-	srand(1000);
+	srand(992);
 
 }
 
@@ -846,7 +846,7 @@ CJumpPointSearch::stNode* CJumpPointSearch::pathFind() {
 
 void CJumpPointSearch::test(const WCHAR* fileName) {
 
-	MAP_STATE patterns[2][3][3] = {
+	MAP_STATE patterns[][3][3] = {
 		{
 			{MAP_STATE::ROAD, MAP_STATE::ROAD, MAP_STATE::ROAD},
 			{MAP_STATE::WALL, MAP_STATE::WALL, MAP_STATE::WALL},
@@ -855,6 +855,10 @@ void CJumpPointSearch::test(const WCHAR* fileName) {
 		{
 			{MAP_STATE::ROAD, MAP_STATE::WALL, MAP_STATE::ROAD},
 			{MAP_STATE::ROAD, MAP_STATE::WALL, MAP_STATE::ROAD},
+			{MAP_STATE::ROAD, MAP_STATE::WALL, MAP_STATE::ROAD}
+		}, {
+			{MAP_STATE::ROAD, MAP_STATE::ROAD, MAP_STATE::ROAD},
+			{MAP_STATE::WALL, MAP_STATE::WALL, MAP_STATE::ROAD},
 			{MAP_STATE::ROAD, MAP_STATE::WALL, MAP_STATE::ROAD}
 		}
 	};
@@ -879,7 +883,7 @@ void CJumpPointSearch::test(const WCHAR* fileName) {
 
 		for (int widthCnt = 3; widthCnt < width - 3; widthCnt += 3) {
 
-			int randPatternIndex = rand() % 2;
+			int randPatternIndex = rand() % 3;
 
 			memcpy(jps->map(heightCnt, widthCnt), patterns[randPatternIndex][0], sizeof(MAP_STATE) * 3);
 			memcpy(jps->map(heightCnt + 1, widthCnt), patterns[randPatternIndex][1], sizeof(MAP_STATE) * 3);
@@ -896,12 +900,11 @@ void CJumpPointSearch::test(const WCHAR* fileName) {
 	jps->_end._y = height - 1;
 
 	stNode* result = jps->pathFind();
-	if (result == false) {
+	if (result == nullptr) {
 		MessageBoxW(NULL, L"길 찾기 실패", L"JumpPointSearch", MB_OK);
 	}
 
 	jps->printToBitmap(fileName, 20, result);
-
 
 }
 
@@ -958,6 +961,89 @@ void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio
 		}
 	}
 
+	singleRgb = rgbData;
+	// 탐색 경로 출력
+	for (int heightCnt = _height - 1; heightCnt >= 0; --heightCnt) {
+		for (int heightRatioCnt = 0; heightRatioCnt < printRatio; ++heightRatioCnt) {
+			for (int widthCnt = 0; widthCnt < _width; ++widthCnt) {
+				for (int widthRatioCnt = 0; widthRatioCnt < printRatio; ++widthRatioCnt, singleRgb += 1) {
+
+					stRGB* mapRgb = mapColor(heightCnt, widthCnt);
+					if (mapRgb->red == 0 && mapRgb->blue == 0 && mapRgb->green == 0) {
+						continue;
+					}
+
+					singleRgb->red = mapRgb->red;
+					singleRgb->blue = mapRgb->blue;
+					singleRgb->green = mapRgb->green;
+
+				}
+			}
+		}
+	}
+
+	// 클로즈 리스트 노드 출력
+
+	for (linkedList<stNode*>::iterator iter = _closeList->begin(); iter != _closeList->end(); ++iter) {
+		int nodeX = (*iter)->_coord->_x * printRatio;
+		int nodeY = (_height-1 - (*iter)->_coord->_y) * printRatio;
+
+		for (int heightRatioCnt = 1; heightRatioCnt <= printRatio/2; ++heightRatioCnt) {
+			nodeX = (*iter)->_coord->_x * printRatio + printRatio / 2 - heightRatioCnt;
+			for (int widthRatioCnt = 0; widthRatioCnt < heightRatioCnt * 2 - 1; ++widthRatioCnt) {
+				stReverseRGB* rgb = &rgbData[(nodeY + heightRatioCnt) * (_width * printRatio) + nodeX + widthRatioCnt];
+				rgb->red = 220;
+				rgb->green = 220;
+				rgb->blue = 0;
+			}
+		}
+
+		nodeY += printRatio / 2;
+		
+		for (int heightRatioCnt = 1; heightRatioCnt <= printRatio/2; ++heightRatioCnt) {
+			nodeX = (*iter)->_coord->_x * printRatio + heightRatioCnt;
+			for (int widthRatioCnt = 0; widthRatioCnt < (printRatio/2-1-heightRatioCnt) * 2 - 1; ++widthRatioCnt) {
+				stReverseRGB* rgb = &rgbData[(nodeY + heightRatioCnt) * (_width * printRatio) + nodeX + widthRatioCnt];
+				rgb->red = 220;
+				rgb->green = 220;
+				rgb->blue = 0;
+			}
+		}
+
+	}
+
+	// 오픈 리스트 노드 출력
+
+	for (linkedList<stNode*>::iterator iter = _openList->begin(); iter != _openList->end(); ++iter) {
+		int nodeX = (*iter)->_coord->_x * printRatio;
+		int nodeY = (_height - 1 - (*iter)->_coord->_y) * printRatio;
+
+		for (int heightRatioCnt = 1; heightRatioCnt <= printRatio / 2; ++heightRatioCnt) {
+			nodeX = (*iter)->_coord->_x * printRatio + printRatio / 2 - heightRatioCnt;
+			for (int widthRatioCnt = 0; widthRatioCnt < heightRatioCnt * 2 - 1; ++widthRatioCnt) {
+				stReverseRGB* rgb = &rgbData[(nodeY + heightRatioCnt) * (_width * printRatio) + nodeX + widthRatioCnt];
+				rgb->red = 150;
+				rgb->green = 210;
+				rgb->blue = 230;
+			}
+		}
+
+		nodeY += printRatio / 2;
+
+		for (int heightRatioCnt = 1; heightRatioCnt <= printRatio / 2; ++heightRatioCnt) {
+			nodeX = (*iter)->_coord->_x * printRatio + heightRatioCnt;
+			for (int widthRatioCnt = 0; widthRatioCnt < (printRatio / 2 - 1 - heightRatioCnt) * 2 - 1; ++widthRatioCnt) {
+				stReverseRGB* rgb = &rgbData[(nodeY + heightRatioCnt) * (_width * printRatio) + nodeX + widthRatioCnt];
+				rgb->red = 150;
+				rgb->green = 210;
+				rgb->blue = 230;
+			}
+		}
+
+	}
+
+	
+
 	// 경로 출력
 	do {
 		//break;
@@ -1010,5 +1096,7 @@ void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio
 
 	fwrite(rgbData, sizeof(stReverseRGB), _width * printRatio * _height * printRatio, bitmapFile);
 	fclose(bitmapFile); 
+
+	free(rgbData);
 
 }

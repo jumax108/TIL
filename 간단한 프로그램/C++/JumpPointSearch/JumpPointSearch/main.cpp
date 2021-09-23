@@ -279,7 +279,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             case 't':
             {
-                for (int testCnt = 0; testCnt < 100; ++testCnt) {
+                for (int testCnt = 0; testCnt < 30; ++testCnt) {
                     WCHAR fileName[50];
                     swprintf_s(fileName, 50, L".\\testImage\\%04d.bmp", testCnt);
                     CJumpPointSearch::test(fileName);
