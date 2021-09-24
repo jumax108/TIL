@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "treeViewer.h"
 
+#include "MemoryLeakCheck.h"
 #include "SimpleProfiler.h"
 #include "tree.h"
 #include "RedBlackTree.h"
@@ -144,6 +145,9 @@ int index;
 
 int x = 0;
 
+int inputCnt;
+WCHAR input[3] = {0, };
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -177,8 +181,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
             tree->print(hdc, x);
+            TextOutW(hdc, 0, 0, input, inputCnt);
             EndPaint(hWnd, &ps);
         }
+        break;
+    case WM_KEYDOWN: {
+        if (wParam == VK_BACK) {
+            if (inputCnt == 0) {
+                break;
+            }
+            inputCnt -= 1;
+            input[inputCnt] = NULL;
+            break;
+        }
+        if (inputCnt == 2) {
+            break;
+        }
+        if ('0' > wParam || wParam > '9') {
+            break;
+        }
+        input[inputCnt++] = wParam;
+        InvalidateRect(hWnd, nullptr, true);
+    }
         break;
     case WM_CHAR:
         switch (wParam) {
@@ -234,28 +258,59 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case 'c':
             {
                 
-                sp = new SimpleProfiler();
+               // sp = new SimpleProfiler();
 
-                srand(1000);
+                srand(1);
+                delete(tree);
                 //srand(time(NULL));
-                for (int i = 0; i < 1000; i++) {
+                for (int loopCnt = 0; loopCnt < 1 ; ++loopCnt ) {
                     tree = TREE_CLASS::test();
                     //tree = TREE_CLASS::test(GetDC(hWnd), hWnd);
                 }
 
-                sp->printToFile();
+              //  sp->printToFile();
 
-                delete (sp);
-                sp = nullptr;
-                
+              //  delete (sp);
+             //   sp = nullptr;
+             //   
                 //tree = TREE_CLASS::singleCaseTest(7169);
             }
 
             break;
+
+            case 'q': {
+                // 선택한 값 삽입
+                int value = _wtoi(input);
+
+                tree->insert(value);
+                addValue.push_back(value);
+
+            }
+                break;
+
+            case 'e': {
+                // 선택한 값 제거
+
+                int value = _wtoi(input);
+
+                tree->erase(value);
+                std::vector<int>::iterator iter;
+                for (iter = addValue.begin(); iter != addValue.end(); ++iter) {
+                    if (*iter == value) {
+                        break;
+                    }
+                }
+                if (iter != addValue.end()) {
+                    addValue.erase(addValue.begin() + index);
+                }
+            }
+                break;
         }
         InvalidateRect(hWnd, nullptr, true);
         break;
     case WM_DESTROY:
+        delete(tree);
+        mlc->~MemoryLeakChecker();
         PostQuitMessage(0);
         break;
     default:

@@ -3,7 +3,7 @@ class CJumpPointSearch {
 
 
 public:
-
+	
 	enum class MAP_STATE {
 		ROAD = 0,
 		WALL = 1
@@ -60,6 +60,31 @@ public:
 		}
 	};
 
+	class iterator {
+	public:
+		iterator(linkedList<stNode*>::iterator pathIter) {
+			_pathIter = pathIter;
+		}
+		stNode* operator*() {
+			return *_pathIter;
+		}
+		void operator++() {
+			++_pathIter;
+		}
+		void operator=(iterator iter) {
+			_pathIter = iter._pathIter;
+		}
+		bool operator==(iterator iter) {
+			return *_pathIter == *iter;
+		}
+		bool operator!=(iterator iter) {
+			return *_pathIter != *iter;
+		}
+
+	private:
+		linkedList<stNode*>::iterator _pathIter;
+	};
+
 public:
 
 	inline MAP_STATE* map(int y, int x) {
@@ -72,9 +97,10 @@ public:
 
 	CJumpPointSearch(int width, int height);
 
-	stNode* pathFind();
+	iterator pathFind();
 	void pathFindInit();
 	stNode* pathFindSingleLoop();
+	iterator makePath(stNode* endNode);
 	void makeNode(stCoord* corner, stNode* parent);
 
 	inline int width() {
@@ -90,11 +116,30 @@ public:
 	void listClear();
 
 	static void test(const WCHAR* fileName);
+
+	iterator lineTo(int sx, int sy, int ex, int ey);
+
 #ifdef _WINDOWS_
 
-	void print(HDC hdc, int blockSize = 10, stNode* endNode = nullptr);
+	void print(HDC hdc, int blockSize, iterator endNodeIter);
 
 #endif
+
+	inline iterator pathEnd() {
+		return _path->end();
+	}
+
+	inline iterator pathBegin() {
+		return _path->begin();
+	}
+
+	inline iterator lineEnd() {
+		return _line->end();
+	}
+
+	inline iterator lineBegin() {
+		return _line->begin();
+	}
 
 private:
 
@@ -106,6 +151,8 @@ private:
 
 	linkedList<stNode*>* _openList;
 	linkedList<stNode*>* _closeList;
+	linkedList<stNode*>* _path;
+	linkedList<stNode*>* _line;
 
 	linkedList<stNode*>::iterator* findMin(linkedList<stNode*>* list);
 
@@ -115,5 +162,5 @@ private:
 	bool isNodeInList(stCoord* coord, linkedList<stNode*>* list);
 
 
-	void printToBitmap(const WCHAR* fileName, const int printRatio, stNode* endNode);
+	void printToBitmap(const WCHAR* fileName, const int printRatio, iterator endNodeIter);
 };

@@ -20,6 +20,8 @@ CJumpPointSearch::CJumpPointSearch(int width, int height) {
 
 	_openList = new linkedList<stNode*>();
 	_closeList = new linkedList<stNode*>();
+	_path = new linkedList<stNode*>();
+	_line = new linkedList<stNode*>();
 
 	_start._x = -1;
 	_start._y = -1;
@@ -579,7 +581,7 @@ linkedList<CJumpPointSearch::stNode*>::iterator* CJumpPointSearch::findMin(linke
 }
 
 #ifdef _WINDOWS_
-void CJumpPointSearch::print(HDC hdc, int blockSize, stNode* endNode) {
+void CJumpPointSearch::print(HDC hdc, int blockSize, iterator endNodeIter) {
 	
 	{
 		// 선 그리기
@@ -791,10 +793,10 @@ void CJumpPointSearch::print(HDC hdc, int blockSize, stNode* endNode) {
 		HPEN hPen = CreatePen(PS_SOLID, blockSize / 4, RGB(240, 70, 70));
 		HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
 
-		if (endNode != nullptr) {
+		if (endNodeIter != pathEnd()) {
 
-			stNode* node = endNode;
-			while (node->_parent != nullptr) {
+			for(iterator nodeIter = _path->begin(); nodeIter != pathEnd(); ++nodeIter) {
+				stNode* node = *nodeIter;
 
 				stCoord* coord = node->_coord;
 				stCoord* parentCoord = node->_parent->_coord;
@@ -802,7 +804,6 @@ void CJumpPointSearch::print(HDC hdc, int blockSize, stNode* endNode) {
 				MoveToEx(hdc, coord->_x * blockSize + blockSize / 2, coord->_y * blockSize + blockSize / 2, nullptr);
 				LineTo(hdc, parentCoord->_x * blockSize + blockSize / 2, parentCoord->_y * blockSize + blockSize / 2);
 
-				node = node->_parent;
 			}
 
 		}
@@ -830,7 +831,7 @@ void CJumpPointSearch::listClear() {
 
 }
 
-CJumpPointSearch::stNode* CJumpPointSearch::pathFind() {
+CJumpPointSearch::iterator CJumpPointSearch::pathFind() {
 
 	pathFindInit();
 	void* singleLoopResult = nullptr;
@@ -839,8 +840,12 @@ CJumpPointSearch::stNode* CJumpPointSearch::pathFind() {
 		// 결과가 1 이면 반복해야함
 	} while ((int)singleLoopResult == 1);
 
+	if (singleLoopResult == nullptr) {
+		return _path->end();
+	}
+	
 	// 못찾으면 nullptr, 찾으면 도착 지점 노드
-	return (stNode*)singleLoopResult;
+	return makePath((stNode*)singleLoopResult);
 
 }
 
@@ -899,16 +904,16 @@ void CJumpPointSearch::test(const WCHAR* fileName) {
 	jps->_end._x = width - 1;
 	jps->_end._y = height - 1;
 
-	stNode* result = jps->pathFind();
-	if (result == nullptr) {
+	iterator findResultIter = jps->pathFind();
+	if (findResultIter == jps->pathEnd()) {
 		MessageBoxW(NULL, L"길 찾기 실패", L"JumpPointSearch", MB_OK);
 	}
 
-	jps->printToBitmap(fileName, 20, result);
+	jps->printToBitmap(fileName, 20, findResultIter);
 
 }
 
-void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio, stNode* endNode) {
+void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio, iterator endNodeIter) {
 
 	BITMAPINFOHEADER info;
 	ZeroMemory(&info, sizeof(BITMAPINFOHEADER));
@@ -1047,12 +1052,13 @@ void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio
 	// 경로 출력
 	do {
 		//break;
-		if (endNode == nullptr) {
+		if (endNodeIter == pathEnd()) {
 			break;
 		}
 
-		stNode* node = endNode;
-		while (node->_parent != nullptr) {
+		for(iterator nodeIter = pathBegin(); nodeIter != pathEnd(); ++nodeIter) {
+
+			stNode* node = *nodeIter;
 
 			stCoord* coord = node->_coord;
 			int startX = coord->_x * printRatio + printRatio / 4;
@@ -1089,7 +1095,6 @@ void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio
 
 			}
 
-			node = node->_parent;
 
 		}
 	} while (false);
@@ -1099,4 +1104,152 @@ void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio
 
 	free(rgbData);
 
+}
+
+CJumpPointSearch::iterator CJumpPointSearch::makePath(stNode* endNode) {
+
+	_path->clear();
+	while (endNode->_parent != nullptr) {
+		_path->push_front(endNode);
+		endNode = endNode->_parent;
+	}
+
+	return _path->begin();
+}
+
+CJumpPointSearch::iterator CJumpPointSearch::lineTo(int sx, int sy, int ex, int ey) {
+
+	_line->clear();
+
+	stCoord direction(ey - sy, ex - sx);
+
+	stCoord move( (direction._y < 0) * -1 + (direction._y > 0), (direction._x < 0) * -1 + (direction._x > 0));
+	
+	stCoord mid((ey + sy) / 2, (ex + sx) / 2);
+
+	_line->push_back(new stNode(nullptr, 0, 0, new stCoord(mid._y, mid._x)));
+	mapColor(mid._y, mid._x)->red = 160;
+	mapColor(mid._y, mid._x)->green = 140;
+	mapColor(mid._y, mid._x)->blue = 200;
+
+	int *mainAxis;
+	int mainAxisMove;
+
+	int *subAxis;
+	int subAxisMove;
+
+	int addWeight;
+	int minusWeight;
+
+	stCoord coord(mid._y, mid._x);
+
+	if (direction._x > direction._y) {
+		addWeight = direction._y;
+		minusWeight = direction._x;
+
+		mainAxis = &coord._x;
+		mainAxisMove = move._x;
+
+		subAxis = &coord._y;
+		subAxisMove = move._y;
+	}
+	else {
+		addWeight = direction._x;
+		minusWeight = direction._y;
+
+		mainAxis = &coord._y;
+		mainAxisMove = move._y;
+
+		subAxis = &coord._x;
+		subAxisMove = move._x;
+	}
+
+	// 중앙선 그리기
+	int weight = addWeight;
+	*mainAxis -= mainAxisMove;
+
+	int cnt = 2;
+	int createDirection = 1;
+
+	stCoord midLineLeft;
+	stCoord midLineRight;
+
+	while (weight < minusWeight && (coord._x > sx || coord._y > sy)){
+
+		_line->push_front(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
+		mapColor(coord._y, coord._x)->red = 20;
+		mapColor(coord._y, coord._x)->green = 200;
+		mapColor(coord._y, coord._x)->blue = 200;
+
+		if (createDirection == 1) {
+
+			midLineLeft._x = coord._x;
+			midLineLeft._y = coord._y;
+		}
+		else {
+			midLineRight._x = coord._x;
+			midLineRight._y = coord._y;
+		}
+
+		weight += addWeight;
+		*mainAxis += mainAxisMove * createDirection * cnt;
+		cnt += 1;
+		createDirection = 0 - createDirection;
+
+	}
+
+	coord._x = midLineLeft._x;
+	coord._y = midLineLeft._y;
+
+	//return pathBegin();
+
+	*subAxis -= subAxisMove;
+	*mainAxis -= mainAxisMove;
+	weight -= minusWeight;
+	//weight = 0;
+	// 중앙선 기준 왼쪽 선들 그리기
+	while (coord._x > sx || coord._y > sy) {
+
+
+		_line->push_front(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
+		mapColor(coord._y, coord._x)->red = 170;
+		mapColor(coord._y, coord._x)->green = 30;
+		mapColor(coord._y, coord._x)->blue = 150;
+
+		weight += addWeight;
+
+		if (weight >= minusWeight) {
+			weight -= minusWeight;
+			*subAxis -= subAxisMove;
+		}
+		*mainAxis -= mainAxisMove;
+	}
+
+	weight = 0;
+	coord._x = midLineRight._x;
+	coord._y = midLineRight._y;
+	*subAxis += subAxisMove;
+	*mainAxis += mainAxisMove;
+
+	// 중앙선 기준 오른쪽 선들 그리기
+	while (coord._x < ex || coord._y < ey) {
+
+		
+		_line->push_back(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
+		mapColor(coord._y, coord._x)->red = 200;
+		mapColor(coord._y, coord._x)->green = 100;
+		mapColor(coord._y, coord._x)->blue = 100;
+
+		weight += addWeight;
+
+		if (weight >= minusWeight) {
+			weight -= minusWeight;
+			*subAxis += subAxisMove;
+		}
+		*mainAxis += mainAxisMove;
+	}
+
+	
+
+	return _line->begin();
 }

@@ -92,9 +92,11 @@ public:
 		node->child->parent = node->parent;
 		node->parent->child = node->child;
 
+		linkedList<T>::iterator* nextIter = ++iter;
+
 		free(node);
 
-		return *(++iter);
+		return *(nextIter);
 	}
 
 	void clear();
@@ -176,8 +178,8 @@ void linkedList<T>::push_front(const T const value) {
 	node->parent = &head;
 	node->child = head.child;
 
-	head->child->parent = node;
-	head->child = node;
+	head.child->parent = node;
+	head.child = node;
 }
 
 template<typename T>

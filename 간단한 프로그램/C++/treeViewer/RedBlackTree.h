@@ -39,6 +39,22 @@ public:
 		_root = new stNode(0, false, true);
 	}
 
+	~CRedBlackTree() {
+
+		if (_root->_isNill == true) {
+			delete(_root);
+			return;
+		} 
+
+		while (_root->_left->_isNill == false || _root->_right->_isNill == false) {
+			erase(_root->_data);
+		}
+
+		delete(_root->_left);
+		delete(_root->_right);
+		delete(_root);
+	}
+
 	void insert(T data) {
 
 		if(sp != nullptr)
@@ -62,7 +78,7 @@ public:
 						node->_right = newNode;
 						newNode->_parent = node;;
 						insertBalance(newNode);
-						//diagnosis(_root);
+						diagnosis(_root);
 						goto FIN;
 					}
 					node = node->_right;
@@ -73,7 +89,7 @@ public:
 						node->_left = newNode;
 						newNode->_parent = node;
 						insertBalance(newNode);
-						//diagnosis(_root);
+						diagnosis(_root);
 						//break;
 						goto FIN;
 					}
@@ -109,7 +125,7 @@ FIN:
 				stNode* erasedNode = eraseNode(node, &isRed);
 				if (isRed == false) {
 					eraseBalance(erasedNode);
-					//diagnosis(_root);
+					diagnosis(_root);
 				}
 				break;
 			}
@@ -440,6 +456,8 @@ private:
 
 			if (left->_right->_isNill == true) {
 
+				delete(left->_right); // 닐 제거
+
 				// 노드의 왼쪽 자식의 우측 자식이 없을 때
 
 				// 노드의 왼쪽 자식과 노드의 데이터를 교체하고
@@ -462,6 +480,7 @@ private:
 				while ((*lastRightNode)->_right->_isNill == false) { // 우측 자식이 닐이 아니면
 					lastRightNode = &((*lastRightNode)->_right); // 우측 자식으로 교체
 				}
+				delete((*lastRightNode)->_right); // 닐제거
 
 				(*node)->_data = (*lastRightNode)->_data; // 노드의 값을 최우측노드의 값으로 변경
 
