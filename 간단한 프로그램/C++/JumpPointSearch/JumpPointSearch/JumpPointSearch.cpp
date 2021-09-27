@@ -913,6 +913,8 @@ void CJumpPointSearch::test(const WCHAR* fileName) {
 
 	CJumpPointSearch* jps = new CJumpPointSearch(width, height);
 
+	srand(rand() % 10000);
+
 	int patternCnt = 0;
 	for (int heightCnt = 0; heightCnt < height; heightCnt += 3) {
 
@@ -948,6 +950,7 @@ void CJumpPointSearch::test(const WCHAR* fileName) {
 	if (findResultIter == jps->pathEnd()) {
 		MessageBoxW(NULL, L"길 찾기 실패", L"JumpPointSearch", MB_OK);
 	}
+	jps->nodeSkip();
 
 	jps->printToBitmap(fileName, 20, findResultIter);
 
@@ -1378,6 +1381,10 @@ void CJumpPointSearch::nodeSkip() {
 		linkedList<stCoord*> changeLineNodeCoord;
 
 		int skipNodeCnt = 0;
+		
+		bool findNode = false;
+		iterator findNodeIter;
+
 		for (iterator endNodeIter = startNodeIter + 1; endNodeIter != pathEnd(); ++endNodeIter) {
 		
 			stNode* startNode = *startNodeIter;
@@ -1401,6 +1408,8 @@ void CJumpPointSearch::nodeSkip() {
 
 			if (isLineBlock == false) {
 				endNode->_parent = startNode;
+				findNodeIter = endNodeIter;
+				findNode = true;
 				skipNodeCnt += 1;
 
 				changeLineNodeCoord.clear();
@@ -1418,7 +1427,7 @@ void CJumpPointSearch::nodeSkip() {
 		}
 		skipNodeCnt -= 1;
 
-		if (skipNodeCnt > 0) {
+		if (findNode == true) {
 
 			for (linkedList<stCoord*>::iterator lineCoordIter = changeLineNodeCoord.begin(); lineCoordIter != changeLineNodeCoord.end(); ++lineCoordIter) {
 
@@ -1435,28 +1444,30 @@ void CJumpPointSearch::nodeSkip() {
 
 			changeLineNodeCoord.clear();
 
-		}
-
-		while (skipNodeCnt > 0 && startNodeIter != pathEnd()) {
 			iterator deleteNodeIter = startNodeIter + 1;
-			stNode* deleteNode = *deleteNodeIter;
+			while (deleteNodeIter != findNodeIter) {
+				stNode* deleteNode = *deleteNodeIter;
 
-			stCoord* deleteCoord = deleteNode->_coord;
-			for (linkedList<stNode*>::iterator iter = _closeList->begin(); iter != _closeList->end(); ++iter) {
-				stCoord* nodeCoord = (*iter)->_coord;
+				stCoord* deleteCoord = deleteNode->_coord;
+				for (linkedList<stNode*>::iterator iter = _closeList->begin(); iter != _closeList->end(); ++iter) {
+					stCoord* nodeCoord = (*iter)->_coord;
 
-				if (nodeCoord->_y == deleteCoord->_y && nodeCoord->_x == deleteCoord->_x) {
+					if (nodeCoord->_y == deleteCoord->_y && nodeCoord->_x == deleteCoord->_x) {
 
-					_closeList->erase(iter);
-					break;
+						_closeList->erase(iter);
+						break;
 
+					}
 				}
-			}
 
-			delete(deleteNode);
-			_path->erase(deleteNodeIter._pathIter);
-			skipNodeCnt -= 1;
+				delete(deleteNode);
+				_path->erase(deleteNodeIter._pathIter);
+				skipNodeCnt -= 1;
+				deleteNodeIter = startNodeIter + 1;
+			}
 		}
+
+		
 
 	}
 

@@ -66,6 +66,7 @@ public:
 		iterator(linkedList<stNode*>::iterator pathIter) {
 			_pathIter = pathIter;
 		}
+		iterator() {}
 		stNode* operator*() {
 			return *_pathIter;
 		}
