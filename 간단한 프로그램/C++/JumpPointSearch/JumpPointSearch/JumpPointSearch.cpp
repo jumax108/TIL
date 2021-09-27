@@ -18,6 +18,10 @@ CJumpPointSearch::CJumpPointSearch(int width, int height) {
 	_mapColor = (stRGB*)malloc(mapColorByte);
 	ZeroMemory(_mapColor, mapColorByte);
 
+	int lineColorByte = sizeof(stRGB) * _width * _height;
+	_lineColor = (stRGB*)malloc(lineColorByte);
+	ZeroMemory(_lineColor, lineColorByte);
+
 	_openList = new linkedList<stNode*>();
 	_closeList = new linkedList<stNode*>();
 	_path = new linkedList<stNode*>();
@@ -37,6 +41,8 @@ void CJumpPointSearch::pathFindInit() {
 
 	int mapColorByte = sizeof(stRGB) * _width * _height;
 	ZeroMemory(_mapColor, mapColorByte);
+	int lineColorByte = sizeof(stRGB) * _width * _height;
+	ZeroMemory(_lineColor, lineColorByte);
 	listClear();
 	_openList->push_back(new stNode(nullptr, 0, abs(_end._x - _start._x) + abs(_end._y - _start._y), new stCoord(_start._y, _start._x)));
 
@@ -634,27 +640,6 @@ void CJumpPointSearch::print(HDC hdc, int blockSize, iterator endNodeIter) {
 
 	}
 
-	{
-		// 벽 그리기
-
-		HBRUSH hBrush = CreateSolidBrush(RGB(200, 200, 200));
-		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-
-		for (int heightCnt = 0; heightCnt < _height; ++heightCnt) {
-			for (int widthCnt = 0; widthCnt < _width; ++widthCnt) {
-				if (*map(heightCnt, widthCnt) == MAP_STATE::WALL) {
-					int left = widthCnt * blockSize + 1;
-					int top = heightCnt * blockSize + 1;
-					int right = left + blockSize - 1;
-					int bottom = top + blockSize - 1;
-					Rectangle(hdc, left, top, right, bottom);
-				}
-			}
-		}
-
-		SelectObject(hdc, hOldBrush);
-		DeleteObject(hBrush);
-	}
 
 
 	{
@@ -745,7 +730,41 @@ void CJumpPointSearch::print(HDC hdc, int blockSize, iterator endNodeIter) {
 		SelectObject(hdc, hOldBrush);
 		DeleteObject(hBrush);
 	} while (false);
-	{
+
+	do {
+
+		// 선으로 판정된 노드를 칠해보자
+		
+		for (int heightCnt = 0; heightCnt < _height; ++heightCnt) {
+			for (int widthCnt = 0; widthCnt < _width; ++widthCnt) {
+
+				stRGB* rgb = lineColor(heightCnt, widthCnt);
+
+				if (rgb->red == 0 && rgb->blue == 0 && rgb->green == 0) {
+					continue;
+				}
+
+				HBRUSH hBrush = CreateSolidBrush(RGB(rgb->red, rgb->green, rgb->blue));
+				HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+				int left = widthCnt * blockSize + 1;
+				int top = heightCnt * blockSize + 1;
+				int right = left + blockSize - 1;
+				int bottom = top + blockSize - 1;
+
+				Rectangle(hdc, left, top, right, bottom);
+
+				SelectObject(hdc, hOldBrush);
+				DeleteObject(hBrush);
+
+			}
+		}
+
+
+	} while (false);
+
+	do{
+		break;
 		// 각 노드의 부모를 이어보자 !
 
 		HPEN hPen = CreatePen(PS_SOLID, blockSize / 8, RGB(190, 110, 190));
@@ -784,8 +803,29 @@ void CJumpPointSearch::print(HDC hdc, int blockSize, iterator endNodeIter) {
 
 		SelectObject(hdc, hOldPen);
 		DeleteObject(hPen);
-	}
+	} while (false);
 
+	{
+		// 벽 그리기
+
+		HBRUSH hBrush = CreateSolidBrush(RGB(200, 200, 200));
+		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+		for (int heightCnt = 0; heightCnt < _height; ++heightCnt) {
+			for (int widthCnt = 0; widthCnt < _width; ++widthCnt) {
+				if (*map(heightCnt, widthCnt) == MAP_STATE::WALL) {
+					int left = widthCnt * blockSize + 1;
+					int top = heightCnt * blockSize + 1;
+					int right = left + blockSize - 1;
+					int bottom = top + blockSize - 1;
+					Rectangle(hdc, left, top, right, bottom);
+				}
+			}
+		}
+
+		SelectObject(hdc, hOldBrush);
+		DeleteObject(hBrush);
+	}
 	{
 
 		// 확정된 길을 이어봅니다 ~
@@ -795,7 +835,7 @@ void CJumpPointSearch::print(HDC hdc, int blockSize, iterator endNodeIter) {
 
 		if (endNodeIter != pathEnd()) {
 
-			for(iterator nodeIter = _path->begin(); nodeIter != pathEnd(); ++nodeIter) {
+			for(iterator nodeIter = pathBegin() + 1; nodeIter != pathEnd(); ++nodeIter) {
 				stNode* node = *nodeIter;
 
 				stCoord* coord = node->_coord;
@@ -841,7 +881,7 @@ CJumpPointSearch::iterator CJumpPointSearch::pathFind() {
 	} while ((int)singleLoopResult == 1);
 
 	if (singleLoopResult == nullptr) {
-		return _path->end();
+		return pathEnd();
 	}
 	
 	// 못찾으면 nullptr, 찾으면 도착 지점 노드
@@ -1056,7 +1096,7 @@ void CJumpPointSearch::printToBitmap(const WCHAR* fileName, const int printRatio
 			break;
 		}
 
-		for(iterator nodeIter = pathBegin(); nodeIter != pathEnd(); ++nodeIter) {
+		for(iterator nodeIter = pathBegin() + 1; nodeIter != pathEnd(); ++nodeIter) {
 
 			stNode* node = *nodeIter;
 
@@ -1114,142 +1154,310 @@ CJumpPointSearch::iterator CJumpPointSearch::makePath(stNode* endNode) {
 		endNode = endNode->_parent;
 	}
 
-	return _path->begin();
+	_path->push_front(endNode);
+
+	return pathBegin();
 }
 
-CJumpPointSearch::iterator CJumpPointSearch::lineTo(int sx, int sy, int ex, int ey) {
+CJumpPointSearch::iterator CJumpPointSearch::lineTo(int sx, int sy, int ex, int ey, bool draw) {
 
 	_line->clear();
+
+	stCoord absDistance(abs(ey - sy) + 1, abs(ex - sx) + 1);
+	if (absDistance._y < absDistance._x) {
+		if (ex < sx) {
+			int temp = sx;
+			sx = ex;
+			ex = temp;
+
+			temp = sy;
+			sy = ey;
+			ey = temp;
+		}
+	}
+	else {
+		if (ey < sy) {
+			int temp = sx;
+			sx = ex;
+			ex = temp;
+
+			temp = sy;
+			sy = ey;
+			ey = temp;
+		}
+	}
 
 	stCoord direction(ey - sy, ex - sx);
 
 	stCoord move( (direction._y < 0) * -1 + (direction._y > 0), (direction._x < 0) * -1 + (direction._x > 0));
-	
-	stCoord mid((ey + sy) / 2, (ex + sx) / 2);
 
-	_line->push_back(new stNode(nullptr, 0, 0, new stCoord(mid._y, mid._x)));
-	mapColor(mid._y, mid._x)->red = 160;
-	mapColor(mid._y, mid._x)->green = 140;
-	mapColor(mid._y, mid._x)->blue = 200;
+	/*
+	_line->push_back(new stNode(nullptr, 0, 0, new stCoord(sy, sx)));
+	if (draw == true) {
+		lineColor(sy, sx)->red = 160;
+		lineColor(sy, sx)->green = 140;
+		lineColor(sy, sx)->blue = 200;
+	}*/
 
 	int *mainAxis;
+	int mainDistance;
 	int mainAxisMove;
 
 	int *subAxis;
+	int subDistance;
 	int subAxisMove;
 
 	int addWeight;
 	int minusWeight;
 
-	stCoord coord(mid._y, mid._x);
+	stCoord coord(absDistance._y, absDistance._x);
 
-	if (direction._x > direction._y) {
-		addWeight = direction._y;
-		minusWeight = direction._x;
+	if (absDistance._x > absDistance._y) {
+		addWeight = absDistance._y;
+		minusWeight = absDistance._x;
 
 		mainAxis = &coord._x;
+		mainDistance = absDistance._x;
 		mainAxisMove = move._x;
 
 		subAxis = &coord._y;
+		subDistance = absDistance._y;
 		subAxisMove = move._y;
 	}
 	else {
-		addWeight = direction._x;
-		minusWeight = direction._y;
+		addWeight = absDistance._x;
+		minusWeight = absDistance._y;
 
 		mainAxis = &coord._y;
+		mainDistance = absDistance._y;
 		mainAxisMove = move._y;
 
 		subAxis = &coord._x;
+		subDistance = absDistance._x;
 		subAxisMove = move._x;
 	}
 
-	// 중앙선 그리기
-	int weight = addWeight;
-	*mainAxis -= mainAxisMove;
+	stCoord mid((ey - sy) / 2 + sy, (ex - sx) / 2 + sx);
+	stCoord left(mid._y, mid._x);
+	stCoord right(mid._y, mid._x);
 
-	int cnt = 2;
-	int createDirection = 1;
+	int midWeight = 0;
 
-	stCoord midLineLeft;
-	stCoord midLineRight;
+	// 가운데 라인 그리기
+	if (subDistance % 2 == 1) {
 
-	while (weight < minusWeight && (coord._x > sx || coord._y > sy)){
+		int remain = mainDistance % subDistance;
+		int midNodeCnt = mainDistance / subDistance + remain % 2;
 
-		_line->push_front(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
-		mapColor(coord._y, coord._x)->red = 20;
-		mapColor(coord._y, coord._x)->green = 200;
-		mapColor(coord._y, coord._x)->blue = 200;
+		midWeight = midNodeCnt * addWeight;
 
-		if (createDirection == 1) {
+		int cnt = 1;
+		int createDirection = 1;
+		coord._x = mid._x;
+		coord._y = mid._y;
+		while (midNodeCnt > 0) {
 
-			midLineLeft._x = coord._x;
-			midLineLeft._y = coord._y;
+			if (createDirection == -1) {
+				_line->push_back(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
+				new (&right) stCoord(coord._y, coord._x);
+			}
+			else {
+				_line->push_front(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
+				new (&left) stCoord(coord._y, coord._x);
+			}
+			if (draw == true) {
+				stRGB* rgb = lineColor(coord._y, coord._x);
+				rgb->red = 160;
+				rgb->green = 140;
+				rgb->blue = 200;
+			}
+			*mainAxis += mainAxisMove * createDirection * cnt;
+
+			createDirection = 0 - createDirection;
+			midNodeCnt -= 1;
+			cnt += 1;
+		}
+
+	}
+
+	int leftWeight;
+
+	// 왼쪽 라인 그리기
+	{
+		int weight = midWeight;
+		new (&coord) stCoord(left._y, left._x);
+		//*subAxis -= subAxisMove * (subDistance % 2);
+		*mainAxis += mainAxisMove * (subDistance % 2 == 0);
+
+		if (subDistance % 2 == 1) {
+			*subAxis -= subAxisMove;
+			weight -= minusWeight;
+			if (weight < 0) {
+				weight = 0;
+			}
+		}
+
+		while (coord._y != sy || coord._x != sx) {
+
+			*mainAxis -= mainAxisMove;
+			_line->push_front(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
+			if (draw == true) {
+				stRGB* rgb = lineColor(coord._y, coord._x);
+				rgb->red = 10;
+				rgb->green = 128;
+				rgb->blue = 255;
+			}
+
+			weight += addWeight;
+
+			if (weight >= minusWeight) {
+				weight -= minusWeight;
+				*subAxis -= subAxisMove;
+			}
+
+			stCoord coordDistance(abs(coord._y - sy), abs(coord._x - sx));
+			if (-1 <= coordDistance._x && coordDistance._x <= 1 && -1 <= coordDistance._y && coordDistance._y <= 1) {
+				break;
+			}
+
+		}
+
+		leftWeight = weight;
+
+	}
+
+	// 오른쪽 라인 그리기
+	{
+		int weight = midWeight;
+		new (&coord) stCoord(right._y, right._x);
+		//*subAxis -= subAxisMove * (subDistance % 2);
+
+		*subAxis += subAxisMove;
+		if (subDistance % 2 == 1) {
+			weight -= minusWeight;
+			if (weight < 0) {
+				weight = 0;
+			}
 		}
 		else {
-			midLineRight._x = coord._x;
-			midLineRight._y = coord._y;
+			weight = leftWeight + addWeight - minusWeight;
 		}
 
-		weight += addWeight;
-		*mainAxis += mainAxisMove * createDirection * cnt;
-		cnt += 1;
-		createDirection = 0 - createDirection;
+		while (coord._y != ey || coord._x != ex) {
 
-	}
+			*mainAxis += mainAxisMove;
+			_line->push_back(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
+			if (draw == true) {
+				stRGB* rgb = lineColor(coord._y, coord._x);
+				rgb->red = 100;
+				rgb->green = 220;
+				rgb->blue = 10;
+			}
 
-	coord._x = midLineLeft._x;
-	coord._y = midLineLeft._y;
+			weight += addWeight;
 
-	//return pathBegin();
+			if (weight >= minusWeight) {
+				weight -= minusWeight;
+				*subAxis += subAxisMove;
+			}
 
-	*subAxis -= subAxisMove;
-	*mainAxis -= mainAxisMove;
-	weight -= minusWeight;
-	//weight = 0;
-	// 중앙선 기준 왼쪽 선들 그리기
-	while (coord._x > sx || coord._y > sy) {
-
-
-		_line->push_front(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
-		mapColor(coord._y, coord._x)->red = 170;
-		mapColor(coord._y, coord._x)->green = 30;
-		mapColor(coord._y, coord._x)->blue = 150;
-
-		weight += addWeight;
-
-		if (weight >= minusWeight) {
-			weight -= minusWeight;
-			*subAxis -= subAxisMove;
+			stCoord coordDistance(abs(coord._y - ey), abs(coord._x - ex));
+			if (-1 <= coordDistance._x && coordDistance._x <= 1 && -1 <= coordDistance._y && coordDistance._y <= 1) {
+				break;
+			}
 		}
-		*mainAxis -= mainAxisMove;
 	}
 
-	weight = 0;
-	coord._x = midLineRight._x;
-	coord._y = midLineRight._y;
-	*subAxis += subAxisMove;
-	*mainAxis += mainAxisMove;
+	return lineBegin();
+}
 
-	// 중앙선 기준 오른쪽 선들 그리기
-	while (coord._x < ex || coord._y < ey) {
+void CJumpPointSearch::nodeSkip() {
 
+	for (iterator startNodeIter = pathBegin(); startNodeIter != pathEnd(); ++startNodeIter) {
+
+		linkedList<stCoord*> changeLineNodeCoord;
+
+		int skipNodeCnt = 0;
+		for (iterator endNodeIter = startNodeIter + 1; endNodeIter != pathEnd(); ++endNodeIter) {
 		
-		_line->push_back(new stNode(nullptr, 0, 0, new stCoord(coord._y, coord._x)));
-		mapColor(coord._y, coord._x)->red = 200;
-		mapColor(coord._y, coord._x)->green = 100;
-		mapColor(coord._y, coord._x)->blue = 100;
+			stNode* startNode = *startNodeIter;
+			stNode* endNode = *endNodeIter;
 
-		weight += addWeight;
+			stCoord* startCoord = startNode->_coord;
+			stCoord* endCoord = endNode->_coord;
 
-		if (weight >= minusWeight) {
-			weight -= minusWeight;
-			*subAxis += subAxisMove;
+			lineTo(startCoord->_x, startCoord->_y, endCoord->_x, endCoord->_y);
+			 
+			bool isLineBlock = false;
+			for (iterator lineIter = lineBegin(); lineIter != lineEnd(); ++lineIter) {
+
+				stCoord* lineCoord = (*lineIter)->_coord;
+				if (*map(lineCoord->_y, lineCoord->_x) == MAP_STATE::WALL) {
+					isLineBlock = true;
+					break;
+				}
+
+			}
+
+			if (isLineBlock == false) {
+				endNode->_parent = startNode;
+				skipNodeCnt += 1;
+
+				changeLineNodeCoord.clear();
+				for (iterator lineIter = lineBegin(); lineIter != lineEnd(); ++lineIter) {
+					stCoord* coord = (*lineIter)->_coord;
+					changeLineNodeCoord.push_back(new stCoord(coord->_y, coord->_x));
+				}
+
+			}
+			else {
+				//break;
+			}
+
+
 		}
-		*mainAxis += mainAxisMove;
+		skipNodeCnt -= 1;
+
+		if (skipNodeCnt > 0) {
+
+			for (linkedList<stCoord*>::iterator lineCoordIter = changeLineNodeCoord.begin(); lineCoordIter != changeLineNodeCoord.end(); ++lineCoordIter) {
+
+				stCoord* coord = *lineCoordIter;
+				stRGB* rgb = lineColor(coord->_y, coord->_x);
+
+				rgb->red = 20;
+				rgb->blue = 125;
+				rgb->green = 125;
+
+				delete(*lineCoordIter);
+
+			}
+
+			changeLineNodeCoord.clear();
+
+		}
+
+		while (skipNodeCnt > 0 && startNodeIter != pathEnd()) {
+			iterator deleteNodeIter = startNodeIter + 1;
+			stNode* deleteNode = *deleteNodeIter;
+
+			stCoord* deleteCoord = deleteNode->_coord;
+			for (linkedList<stNode*>::iterator iter = _closeList->begin(); iter != _closeList->end(); ++iter) {
+				stCoord* nodeCoord = (*iter)->_coord;
+
+				if (nodeCoord->_y == deleteCoord->_y && nodeCoord->_x == deleteCoord->_x) {
+
+					_closeList->erase(iter);
+					break;
+
+				}
+			}
+
+			delete(deleteNode);
+			_path->erase(deleteNodeIter._pathIter);
+			skipNodeCnt -= 1;
+		}
+
 	}
 
-	
-
-	return _line->begin();
 }

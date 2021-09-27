@@ -48,6 +48,14 @@ public:
 			return this;
 		}
 
+		inline iterator operator+(int addNum) {
+			iterator iter = *this;
+			for (int addCnt = 0; addCnt < addNum; ++addCnt) {
+				++iter;
+			}
+			return iter;
+		}
+
 
 
 		inline iterator* operator--() {

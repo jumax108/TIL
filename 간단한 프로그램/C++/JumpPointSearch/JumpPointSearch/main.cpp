@@ -287,7 +287,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 break;
             case 'p':
             {
-                jps->lineTo(jps->_start._x, jps->_start._y, jps->_end._x, jps->_end._y);
+                jps->lineTo(jps->_start._x, jps->_start._y, jps->_end._x, jps->_end._y, true);
 
                 HDC hdc = GetDC(hWnd);
                 HBRUSH hBrush = CreateSolidBrush(RGB(123, 0, 123));
@@ -313,6 +313,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 InvalidateRect(hWnd, nullptr, true);
 
             }
+            case 'l': {
+                jps->nodeSkip();
+                InvalidateRect(hWnd, nullptr, false);
+            }
+                break;
             break;
         }
         break;

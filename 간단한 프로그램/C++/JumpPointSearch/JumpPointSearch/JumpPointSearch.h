@@ -61,6 +61,7 @@ public:
 	};
 
 	class iterator {
+		friend class CJumpPointSearch;
 	public:
 		iterator(linkedList<stNode*>::iterator pathIter) {
 			_pathIter = pathIter;
@@ -81,6 +82,14 @@ public:
 			return *_pathIter != *iter;
 		}
 
+		iterator operator+(int addNum) {
+			iterator iter = *this;
+			for (int addCnt = 0; addCnt < addNum; ++addCnt) {
+				++iter;
+			}
+			return iter;
+		}
+
 	private:
 		linkedList<stNode*>::iterator _pathIter;
 	};
@@ -93,6 +102,10 @@ public:
 
 	inline stRGB* mapColor(int y, int x) {
 		return &_mapColor[y * _width + x];
+	}
+
+	inline stRGB* lineColor(int y, int x) {
+		return &_lineColor[y * _width + x];
 	}
 
 	CJumpPointSearch(int width, int height);
@@ -117,7 +130,9 @@ public:
 
 	static void test(const WCHAR* fileName);
 
-	iterator lineTo(int sx, int sy, int ex, int ey);
+	iterator lineTo(int sx, int sy, int ex, int ey, bool draw=false);
+
+	void nodeSkip();
 
 #ifdef _WINDOWS_
 
@@ -125,19 +140,19 @@ public:
 
 #endif
 
-	inline iterator pathEnd() {
+	inline linkedList<stNode*>::iterator pathEnd() {
 		return _path->end();
 	}
 
-	inline iterator pathBegin() {
+	inline linkedList<stNode*>::iterator pathBegin() {
 		return _path->begin();
 	}
 
-	inline iterator lineEnd() {
+	inline linkedList<stNode*>::iterator lineEnd() {
 		return _line->end();
 	}
 
-	inline iterator lineBegin() {
+	inline linkedList<stNode*>::iterator lineBegin() {
 		return _line->begin();
 	}
 
@@ -148,6 +163,7 @@ private:
 	int _height;
 
 	stRGB* _mapColor;
+	stRGB* _lineColor;
 
 	linkedList<stNode*>* _openList;
 	linkedList<stNode*>* _closeList;
@@ -160,7 +176,6 @@ private:
 	stCoord* checkDiagonal(DIRECTION dir, int y, int x, const stRGB* color);
 
 	bool isNodeInList(stCoord* coord, linkedList<stNode*>* list);
-
 
 	void printToBitmap(const WCHAR* fileName, const int printRatio, iterator endNodeIter);
 };
