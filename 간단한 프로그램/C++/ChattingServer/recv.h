@@ -1,11 +1,11 @@
 class CProxyFuncBase{
 public:
-	virtual bool REQ_LogInProxy(wchar name[15]){ return false; }
+	virtual bool REQ_LogInProxy(wchar_t name[15]){ return false; }
 	virtual bool RES_LogInProxy(unsigned char result, unsigned int userId){ return false; }
 	virtual bool REQ_RoomListProxy(){ return false; }
 	virtual bool RES_RoomListProxy(short num, stRoom* room){ return false; }
 	virtual bool REQ_RoomCreateProxy(unsigned short nameSize, wchar_t* name){ return false; }
-	virtual bool RES_RoomCreateProxy(unsigned char result, unsigned int roomId., unsigned short roomNameSize, wchar_t* roomName){ return false; }
+	virtual bool RES_RoomCreateProxy(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName){ return false; }
 	virtual bool REQ_RoomEnterProxy(unsigned int roomId){ return false; }
 	virtual bool RES_RoomEnterProxy(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName, unsigned char userNum, stUser* user){ return false; }
 	virtual bool REQ_ChatProxy(unsigned int userId, unsigned short msgSize, wchar_t* msg){ return false; }
@@ -16,9 +16,9 @@ public:
 		switch(header->payloadType){
 			case REQ_LogIn:
 			{
-				wchar name[15];
-				*payload >> name[15];
-				proxy->REQ_LogInProxy(name[15]);
+				wchar_t name[15];
+				payload->popData(sizeof(wchar_t) * 15, (char*)name);
+				proxy->REQ_LogInProxy(name);
 			}
 			break;
 			case RES_LogIn:
@@ -48,22 +48,24 @@ public:
 			{
 				unsigned short nameSize;
 				*payload >> nameSize;
-				wchar_t* name;
-				*payload >> name;
+				wchar_t* name = new wchar_t[nameSize];
+				payload->popData(nameSize * sizeof(wchar_t), (char*)name);
 				proxy->REQ_RoomCreateProxy(nameSize, name);
+				delete[] name;
 			}
 			break;
 			case RES_RoomCreate:
 			{
 				unsigned char result;
 				*payload >> result;
-				unsigned int roomId.;
-				*payload >> roomId.;
+				unsigned int roomId;
+				*payload >> roomId;
 				unsigned short roomNameSize;
 				*payload >> roomNameSize;
-				wchar_t* roomName;
-				*payload >> roomName;
-				proxy->RES_RoomCreateProxy(result, roomId., roomNameSize, roomName);
+				wchar_t* roomName = new wchar_t[roomNameSize];
+				payload->popData(roomNameSize * sizeof(wchar_t), (char*)roomName);
+				proxy->RES_RoomCreateProxy(result, roomId, roomNameSize, roomName);
+				delete[] roomName;
 			}
 			break;
 			case REQ_RoomEnter:
@@ -81,13 +83,14 @@ public:
 				*payload >> roomId;
 				unsigned short roomNameSize;
 				*payload >> roomNameSize;
-				wchar_t* roomName;
-				*payload >> roomName;
+				wchar_t* roomName = new wchar_t[roomNameSize];
+				payload->popData(roomNameSize * sizeof(wchar_t), (char*)roomName);
 				unsigned char userNum;
 				*payload >> userNum;
 				stUser* user;
 				*payload >> user;
 				proxy->RES_RoomEnterProxy(result, roomId, roomNameSize, roomName, userNum, user);
+				delete[] roomName;
 			}
 			break;
 			case REQ_Chat:
@@ -96,9 +99,10 @@ public:
 				*payload >> userId;
 				unsigned short msgSize;
 				*payload >> msgSize;
-				wchar_t* msg;
-				*payload >> msg;
+				wchar_t* msg = new wchar_t[msgSize];
+				payload->popData(sizeof(wchar_t) * msgSize, (char*)msg);
 				proxy->REQ_ChatProxy(userId, msgSize, msg);
+				delete[] msg;
 			}
 			break;
 			case REQ_RoomLeave:
@@ -114,10 +118,10 @@ public:
 			case RES_UserEnter:
 			{
 				wchar_t name[15];
-				*payload >> name[15];
+				payload->popData(sizeof(wchar_t) * 15, (char*)name);
 				unsigned int id;
 				*payload >> id;
-				proxy->RES_UserEnterProxy(name[15], id);
+				proxy->RES_UserEnterProxy(name, id);
 			}
 			break;
 		}

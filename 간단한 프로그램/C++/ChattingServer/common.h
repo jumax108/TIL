@@ -1,15 +1,15 @@
-pragma pack(1)
+#pragma pack(1)
 
 struct stHeader{
 	unsigned char code;
 	unsigned char checkSum;
 
-	unsigned short msgType;
+	unsigned short payloadType;
 	unsigned short payloadSize;
 };
 
 struct stREQ_LogIn{
-	wchar name[15];
+	wchar_t name[15];
 };
 struct stRES_LogIn{
 	unsigned char result;
@@ -55,7 +55,7 @@ struct stRES_UserEnter{
 	wchar_t name[15];
 	unsigned int id;
 };
-pragma pack(0)
+#pragma pack(0)
 constexpr unsigned int REQ_LogIn = 1;
 constexpr unsigned int RES_LogIn = 2;
 constexpr unsigned int REQ_RoomList = 3;
