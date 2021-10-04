@@ -105,6 +105,7 @@ void CLetsRPC::makeStruct() {
 	fwprintf(commonFile, L"pragma pack(1)\n");
 	fwprintf(commonFile, L"struct stHeader{\n");
 	fwprintf(commonFile, L"\tchar code;\n");
+	fwprintf(commonFile, L"\tunsigned char checkSum;\n");
 	fwprintf(commonFile, L"\tchar payloadSize;\n");
 	fwprintf(commonFile, L"\tchar payloadType;\n");
 	fwprintf(commonFile, L"};\n");

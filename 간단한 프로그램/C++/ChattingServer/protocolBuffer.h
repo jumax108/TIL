@@ -44,7 +44,9 @@ public:
 #pragma endregion
 
 	void putData(unsigned int size, const char* data);
+	void putDataW(unsigned int size, const wchar_t* data);
 	bool popData(unsigned int size, char* data);
+	bool popDataW(unsigned int size, wchar_t* data);
 
 	int getUsedSize();
 	int getFreeSize();

@@ -1,8 +1,5 @@
 class CNetwork;
 extern CNetwork* network;
-/*
-CNetwork 클래스에서 ringbuffer에 있는 데이터를 실제로 send 해야합니다.
-*/
 class CStubFunc{
 	virtual bool REQ_LogInStub(CRingBuffer* sendBuffer, wchar name[15])
 	{
@@ -40,14 +37,18 @@ class CStubFunc{
 			network->sendPacket();
 		}
 	}
-	virtual bool RES_RoomListStub(CRingBuffer* sendBuffer, short num, stRoom* room)
+	virtual bool RES_RoomListStub(CRingBuffer* sendBuffer, unsigned short roomNum, unsigned int roomId, unsigned short roomNameLen, wchar_t* roomName, unsigned char userNum, wchar_t** userName)
 	{
 		CProtocolBuffer packet(50);
 		packet<<(char)0x89;
 		packet<<(char)sizeof(stRES_RoomList);
 		packet<<(char)RES_RoomList;
-		packet << num;
-		packet << room;
+		packet << roomNum;
+		packet << roomId;
+		packet << roomNameLen;
+		packet << roomName;
+		packet << userNum;
+		packet << userName;
 		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
 		if(network->ableSendPacket == true){
 			network->sendPacket();
@@ -66,14 +67,14 @@ class CStubFunc{
 			network->sendPacket();
 		}
 	}
-	virtual bool RES_RoomCreateStub(CRingBuffer* sendBuffer, unsigned char result, unsigned int roomId., unsigned short roomNameSize, wchar_t* roomName)
+	virtual bool RES_RoomCreateStub(CRingBuffer* sendBuffer, unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName)
 	{
 		CProtocolBuffer packet(50);
 		packet<<(char)0x89;
 		packet<<(char)sizeof(stRES_RoomCreate);
 		packet<<(char)RES_RoomCreate;
 		packet << result;
-		packet << roomId.;
+		packet << roomId;
 		packet << roomNameSize;
 		packet << roomName;
 		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
@@ -93,7 +94,7 @@ class CStubFunc{
 			network->sendPacket();
 		}
 	}
-	virtual bool RES_RoomEnterStub(CRingBuffer* sendBuffer, unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName, unsigned char userNum, stUser* user)
+	virtual bool RES_RoomEnterStub(CRingBuffer* sendBuffer, unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName, unsigned char userNum, wchar_t** userName, unsigned int* userId)
 	{
 		CProtocolBuffer packet(50);
 		packet<<(char)0x89;
@@ -104,7 +105,8 @@ class CStubFunc{
 		packet << roomNameSize;
 		packet << roomName;
 		packet << userNum;
-		packet << user;
+		packet << userName;
+		packet << userId;
 		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
 		if(network->ableSendPacket == true){
 			network->sendPacket();
@@ -146,14 +148,40 @@ class CStubFunc{
 			network->sendPacket();
 		}
 	}
-	virtual bool RES_UserEnterStub(CRingBuffer* sendBuffer, wchar_t name[15], unsigned int id)
+	virtual bool RES_UserEnterStub(CRingBuffer* sendBuffer, wchar_t* name, unsigned int id)
 	{
 		CProtocolBuffer packet(50);
 		packet<<(char)0x89;
 		packet<<(char)sizeof(stRES_UserEnter);
 		packet<<(char)RES_UserEnter;
-		packet << name[15];
+		packet << name;
 		packet << id;
+		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
+		if(network->ableSendPacket == true){
+			network->sendPacket();
+		}
+	}
+	virtual bool REQ_STRESS_ECHOStub(CRingBuffer* sendBuffer, short size, wchar_t* str)
+	{
+		CProtocolBuffer packet(50);
+		packet<<(char)0x89;
+		packet<<(char)sizeof(stREQ_STRESS_ECHO);
+		packet<<(char)REQ_STRESS_ECHO;
+		packet << size;
+		packet << str;
+		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
+		if(network->ableSendPacket == true){
+			network->sendPacket();
+		}
+	}
+	virtual bool RES_STRESS_ECHOStub(CRingBuffer* sendBuffer, short size, wchar_t* str)
+	{
+		CProtocolBuffer packet(50);
+		packet<<(char)0x89;
+		packet<<(char)sizeof(stRES_STRESS_ECHO);
+		packet<<(char)RES_STRESS_ECHO;
+		packet << size;
+		packet << str;
 		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
 		if(network->ableSendPacket == true){
 			network->sendPacket();

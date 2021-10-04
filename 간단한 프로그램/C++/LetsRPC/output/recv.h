@@ -3,15 +3,17 @@ public:
 	virtual bool REQ_LogInProxy(wchar name[15]){ return false; }
 	virtual bool RES_LogInProxy(unsigned char result, unsigned int userId){ return false; }
 	virtual bool REQ_RoomListProxy(){ return false; }
-	virtual bool RES_RoomListProxy(short num, stRoom* room){ return false; }
+	virtual bool RES_RoomListProxy(unsigned short roomNum, unsigned int roomId, unsigned short roomNameLen, wchar_t* roomName, unsigned char userNum, wchar_t** userName){ return false; }
 	virtual bool REQ_RoomCreateProxy(unsigned short nameSize, wchar_t* name){ return false; }
-	virtual bool RES_RoomCreateProxy(unsigned char result, unsigned int roomId., unsigned short roomNameSize, wchar_t* roomName){ return false; }
+	virtual bool RES_RoomCreateProxy(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName){ return false; }
 	virtual bool REQ_RoomEnterProxy(unsigned int roomId){ return false; }
-	virtual bool RES_RoomEnterProxy(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName, unsigned char userNum, stUser* user){ return false; }
+	virtual bool RES_RoomEnterProxy(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName, unsigned char userNum, wchar_t** userName, unsigned int* userId){ return false; }
 	virtual bool REQ_ChatProxy(unsigned int userId, unsigned short msgSize, wchar_t* msg){ return false; }
 	virtual bool REQ_RoomLeaveProxy(){ return false; }
 	virtual bool RES_RoomDeleteProxy(){ return false; }
-	virtual bool RES_UserEnterProxy(wchar_t name[15], unsigned int id){ return false; }
+	virtual bool RES_UserEnterProxy(wchar_t* name, unsigned int id){ return false; }
+	virtual bool REQ_STRESS_ECHOProxy(short size, wchar_t* str){ return false; }
+	virtual bool RES_STRESS_ECHOProxy(short size, wchar_t* str){ return false; }
 	void packetProc(stHeader* header, CProtocolBuffer* payload, CProxyFuncBase* proxy){
 		switch(header->payloadType){
 			case REQ_LogIn:
@@ -37,11 +39,19 @@ public:
 			break;
 			case RES_RoomList:
 			{
-				short num;
-				*payload >> num;
-				stRoom* room;
-				*payload >> room;
-				proxy->RES_RoomListProxy(num, room);
+				unsigned short roomNum;
+				*payload >> roomNum;
+				unsigned int roomId;
+				*payload >> roomId;
+				unsigned short roomNameLen;
+				*payload >> roomNameLen;
+				wchar_t* roomName;
+				*payload >> roomName;
+				unsigned char userNum;
+				*payload >> userNum;
+				wchar_t** userName;
+				*payload >> userName;
+				proxy->RES_RoomListProxy(roomNum, roomId, roomNameLen, roomName, userNum, userName);
 			}
 			break;
 			case REQ_RoomCreate:
@@ -57,13 +67,13 @@ public:
 			{
 				unsigned char result;
 				*payload >> result;
-				unsigned int roomId.;
-				*payload >> roomId.;
+				unsigned int roomId;
+				*payload >> roomId;
 				unsigned short roomNameSize;
 				*payload >> roomNameSize;
 				wchar_t* roomName;
 				*payload >> roomName;
-				proxy->RES_RoomCreateProxy(result, roomId., roomNameSize, roomName);
+				proxy->RES_RoomCreateProxy(result, roomId, roomNameSize, roomName);
 			}
 			break;
 			case REQ_RoomEnter:
@@ -85,9 +95,11 @@ public:
 				*payload >> roomName;
 				unsigned char userNum;
 				*payload >> userNum;
-				stUser* user;
-				*payload >> user;
-				proxy->RES_RoomEnterProxy(result, roomId, roomNameSize, roomName, userNum, user);
+				wchar_t** userName;
+				*payload >> userName;
+				unsigned int* userId;
+				*payload >> userId;
+				proxy->RES_RoomEnterProxy(result, roomId, roomNameSize, roomName, userNum, userName, userId);
 			}
 			break;
 			case REQ_Chat:
@@ -113,11 +125,29 @@ public:
 			break;
 			case RES_UserEnter:
 			{
-				wchar_t name[15];
-				*payload >> name[15];
+				wchar_t* name;
+				*payload >> name;
 				unsigned int id;
 				*payload >> id;
-				proxy->RES_UserEnterProxy(name[15], id);
+				proxy->RES_UserEnterProxy(name, id);
+			}
+			break;
+			case REQ_STRESS_ECHO:
+			{
+				short size;
+				*payload >> size;
+				wchar_t* str;
+				*payload >> str;
+				proxy->REQ_STRESS_ECHOProxy(size, str);
+			}
+			break;
+			case RES_STRESS_ECHO:
+			{
+				short size;
+				*payload >> size;
+				wchar_t* str;
+				*payload >> str;
+				proxy->RES_STRESS_ECHOProxy(size, str);
 			}
 			break;
 		}

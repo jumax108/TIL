@@ -72,6 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -92,6 +93,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -141,19 +143,21 @@
   <ItemGroup>
     <ClCompile Include="chatingServer.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="network.cpp" />
     <ClCompile Include="protocolBuffer.cpp" />
+    <ClCompile Include="recv.cpp" />
+    <ClCompile Include="recvFunc.cpp" />
     <ClCompile Include="ringBuffer.cpp" />
     <ClCompile Include="room.cpp" />
+    <ClCompile Include="send.cpp" />
     <ClCompile Include="user.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="chatingProtocolBuffer.h" />
     <ClInclude Include="chatingServer.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="network.h" />
     <ClInclude Include="protocolBuffer.h" />
     <ClInclude Include="recv.h" />
+    <ClInclude Include="recvFunc.h" />
     <ClInclude Include="ringBuffer.h" />
     <ClInclude Include="room.h" />
     <ClInclude Include="send.h" />

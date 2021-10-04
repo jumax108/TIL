@@ -11,7 +11,7 @@ result
 
 REQ_RoomList();
 
-RES_RoomList(short num, stRoom* room);
+RES_RoomList(unsigned short roomNum, unsigned int roomId, unsigned short roomNameLen, wchar_t* roomName, unsigned char userNum, wchar_t** userName);
 /*
 stRoom {
 	unsigned int roomId;
@@ -24,7 +24,7 @@ stRoom {
 
 REQ_RoomCreate(unsigned short nameSize, wchar_t* name);
 
-RES_RoomCreate(unsigned char result, unsigned int roomId., unsigned short roomNameSize, wchar_t* roomName);
+RES_RoomCreate(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName);
 /*
 result
 1: ok
@@ -35,7 +35,7 @@ result
 
 REQ_RoomEnter(unsigned int roomId);
 
-RES_RoomEnter(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName, unsigned char userNum, stUser* user);
+RES_RoomEnter(unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName, unsigned char userNum, wchar_t** userName, unsigned int* userId);
 /*
 result 1:ok, 2: 방id 오류, 3: 인원 초과, 4: 기타 오류
 
@@ -51,4 +51,9 @@ REQ_RoomLeave();
 
 RES_RoomDelete();
 
-RES_UserEnter(wchar_t name[15], unsigned int id);
+RES_UserEnter(wchar_t* name, unsigned int id);
+
+[num] = 100
+
+REQ_STRESS_ECHO(short size, wchar_t* str);
+RES_STRESS_ECHO(short size, wchar_t* str);

@@ -1,8 +1,22 @@
 ﻿#include <stdio.h>
-#include <Windows.h>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <list>
+#include <unordered_set>
+#include <unordered_map>
+#pragma comment(lib, "ws2_32")
 
 #include "ringBuffer.h"
+#include "protocolBuffer.h"
+#include "user.h"
+#include "room.h"
 
+#include "network.h"
+#include "common.h"
+#include "recv.h"
+#include "send.h"
+
+#include "recvFunc.h"
 #define min(a, b) (a>b?b:a)
 #define max(a, b) (a>b?a:b)
 
@@ -141,7 +155,7 @@ bool CRingBuffer::moveRear(unsigned int size) {
 
 unsigned int CRingBuffer::getDirectFreeSize() {
 	if (_front > _rear) {
-		return _front - _front - 1;
+		return _front - _rear - 1;
 	}
 	return _capacity + 1 - _rear;
 }

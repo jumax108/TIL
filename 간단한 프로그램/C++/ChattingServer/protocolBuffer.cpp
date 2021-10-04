@@ -2,9 +2,25 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <time.h>
+#include <stdio.h>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <list>
+#include <unordered_set>
+#include <unordered_map>
+#pragma comment(lib, "ws2_32")
 
+#include "ringBuffer.h"
 #include "protocolBuffer.h"
+#include "user.h"
+#include "room.h"
 
+#include "network.h"
+#include "common.h"
+#include "recv.h"
+#include "send.h"
+
+#include "recvFunc.h"
 CProtocolBuffer::CProtocolBuffer(unsigned int size) {
 
 	_capacity = size;
@@ -13,6 +29,7 @@ CProtocolBuffer::CProtocolBuffer(unsigned int size) {
 	_rear = 0;
 
 	_buffer = (char*)malloc(_capacity);
+	ZeroMemory(_buffer, _capacity);
 
 }
 
@@ -68,6 +85,16 @@ void CProtocolBuffer::putData(unsigned int size, const char* data) {
 	_rear += size;
 
 }
+void CProtocolBuffer::putDataW(unsigned int size, const wchar_t* data) {
+
+	if (size * 2 > _capacity - _rear) {
+		resize();
+	}
+
+	memcpy(_buffer + _rear, data, size * 2);
+	_rear += size * 2;
+
+}
 
 bool CProtocolBuffer::popData(unsigned int size, char* data) {
 
@@ -80,6 +107,17 @@ bool CProtocolBuffer::popData(unsigned int size, char* data) {
 
 	return true;
 
+}
+
+bool CProtocolBuffer::popDataW(unsigned int size, wchar_t* data) {
+	if (_rear - _front < size * 2) {
+		return false;
+	}
+
+	memcpy(data, _buffer + _front, size * 2);
+	_front += size * 2;
+
+	return true;
 }
 
 int CProtocolBuffer::getUsedSize() {

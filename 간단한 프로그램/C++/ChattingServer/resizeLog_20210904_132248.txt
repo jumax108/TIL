@@ -1,0 +1,12 @@
+protocol buffer resized
+
+before size: 50
+after size: 100
+
+buffer start in hex
+
+01 02 00 00 00 02 00 32 00 02 
+66 00 00 00 00 00 00 00 00 00 
+00 00 00 00 00 00 00 00 00 00 
+00 00 00 00 00 00 00 00 00 00 
+06 00 00 00 FFFFFFCD FFFFFFCD FFFFFFCD FFFFFFCD FFFFFFCD FFFFFFCD 

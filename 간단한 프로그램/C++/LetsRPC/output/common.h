@@ -1,13 +1,10 @@
 pragma pack(1)
-
 struct stHeader{
-	unsigned char code;
+	char code;
 	unsigned char checkSum;
-
-	unsigned short msgType;
-	unsigned short payloadSize;
+	char payloadSize;
+	char payloadType;
 };
-
 struct stREQ_LogIn{
 	wchar name[15];
 };
@@ -18,8 +15,12 @@ struct stRES_LogIn{
 struct stREQ_RoomList{
 };
 struct stRES_RoomList{
-	short num;
-	stRoom* room;
+	unsigned short roomNum;
+	unsigned int roomId;
+	unsigned short roomNameLen;
+	wchar_t* roomName;
+	unsigned char userNum;
+	wchar_t** userName;
 };
 struct stREQ_RoomCreate{
 	unsigned short nameSize;
@@ -27,7 +28,7 @@ struct stREQ_RoomCreate{
 };
 struct stRES_RoomCreate{
 	unsigned char result;
-	unsigned int roomId.;
+	unsigned int roomId;
 	unsigned short roomNameSize;
 	wchar_t* roomName;
 };
@@ -40,7 +41,8 @@ struct stRES_RoomEnter{
 	unsigned short roomNameSize;
 	wchar_t* roomName;
 	unsigned char userNum;
-	stUser* user;
+	wchar_t** userName;
+	unsigned int* userId;
 };
 struct stREQ_Chat{
 	unsigned int userId;
@@ -52,8 +54,16 @@ struct stREQ_RoomLeave{
 struct stRES_RoomDelete{
 };
 struct stRES_UserEnter{
-	wchar_t name[15];
+	wchar_t* name;
 	unsigned int id;
+};
+struct stREQ_STRESS_ECHO{
+	short size;
+	wchar_t* str;
+};
+struct stRES_STRESS_ECHO{
+	short size;
+	wchar_t* str;
 };
 pragma pack(0)
 constexpr unsigned int REQ_LogIn = 1;
@@ -68,3 +78,5 @@ constexpr unsigned int REQ_Chat = 9;
 constexpr unsigned int REQ_RoomLeave = 10;
 constexpr unsigned int RES_RoomDelete = 11;
 constexpr unsigned int RES_UserEnter = 12;
+constexpr unsigned int REQ_STRESS_ECHO = 100;
+constexpr unsigned int RES_STRESS_ECHO = 101;

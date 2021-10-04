@@ -2,28 +2,39 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <list>
+#include <unordered_set>
 #include <unordered_map>
+#include <windows.h>
 #pragma comment(lib, "ws2_32")
+#define STRESS_TEST
 
-
-#include "network.h"
 #include "ringBuffer.h"
+#include "protocolBuffer.h"
 #include "user.h"
 #include "room.h"
 
-#include "protocolBuffer.h"
-#include "chatingProtocolBuffer.h"
+#include "network.h"
 #include "common.h"
 #include "recv.h"
 #include "send.h"
+#include "recvFunc.h"
 
-CNetwork* network;
+
+using std::unordered_map;
+
+CUserList* userList = new CUserList();
+CRoomList* roomList = new CRoomList();
+CStubFunc* stubFunc = new CStubFunc();
+CProxyFunc* recvFunc = new CProxyFunc();
+
+CNetwork<CUserList::USER_LIST_TYPE::iterator>* network = new CNetwork<CUserList::USER_LIST_TYPE::iterator>();
 
 using std::list;
 
 void acceptConnect();
-void recvPacket();
-void sendPacket();
+
+unsigned int echoProcCnt = 0;
+unsigned int startTime = 0;
 
 int main() {
 
@@ -36,11 +47,31 @@ int main() {
 
 	wprintf(L"server open\n");
 
+	timeBeginPeriod(1);
+	startTime = timeGetTime();
+
 	while (1) {
 
 		acceptConnect();
-		recvPacket();
-		sendPacket();
+		network->recvPacket();
+		network->sendPacket();
+		for (CUserList::USER_LIST_TYPE::iterator userIter = userList->userListBegin(); userIter != userList->userListEnd();) {
+			stUser* user = userList->getUser(userIter);
+			++userIter;
+			if (user->_isErase == true){
+				network->disconnect(user, user->_name != nullptr);
+				continue;
+			}
+		}
+
+#ifdef STRESS_TEST
+		int time = timeGetTime();
+		if (time - startTime >= 1000) {
+			startTime = time;
+			wprintf(L"process Cnt : %d\n", echoProcCnt);
+			echoProcCnt = 0;
+		}
+#endif
 
 	}
 
@@ -61,167 +92,11 @@ void acceptConnect() {
 
 		// 연결 후 초기화
 		
+		wprintf(L"connect user: %x(%d)\n", clientAddr.sin_addr, clientAddr.sin_port);
+
 		stUser* user = new stUser(resSock, &clientAddr);
-		userListInsert(resSock, user);
+		userList->userListInsert(resSock, user);
 		 
 	}
 }
 
-void recvPacket() {
-
-	FD_SET readSet;
-	int userCnt = 0;
-
-	list<stUser*> userInSet;
-	timeval delayZero;
-	ZeroMemory(&delayZero, sizeof(timeval));
-
-	for (unordered_map<SOCKET, stUser*>::iterator userListIter = userListBegin(); userListIter != userListEnd(); ++userListIter) {
-
-		std::pair<SOCKET, stUser*> pair = *userListIter;
-		SOCKET socket = pair.first;
-		stUser* user = pair.second;
-
-		FD_SET(socket, &readSet);
-		++userCnt;
-
-		userInSet.push_back(user);
-
-		if (userCnt < 64) {
-			continue;
-		}
-
-		userCnt = 0;
-
-		int selectResult = select(0, &readSet, nullptr, nullptr, &delayZero);
-
-		if (selectResult == 0) {
-			continue;
-		}
-
-		for (list<stUser*>::iterator userSetIter = userInSet.begin(); userSetIter != userInSet.end(); ++userSetIter) {
-
-			stUser* user = *userSetIter;
-			SOCKET socket = user->_socket;
-			CRingBuffer* recvBuffer = user->_recvBuffer;
-
-			if (FD_ISSET(socket, &readSet) == false) {
-				continue;
-			}
-
-			recv(socket, recvBuffer->getDirectPush(), recvBuffer->getDirectFreeSize(), 0);
-
-		}
-
-		FD_ZERO(&readSet);
-		userInSet.clear();
-
-	}
-
-	do {
-		if (userInSet.empty() == true) {
-			break;
-		}
-
-		int selectResult = select(0, &readSet, nullptr, nullptr, &delayZero);
-		if (selectResult == 0) {
-			break;
-		}
-		for (list<stUser*>::iterator userSetIter = userInSet.begin(); userSetIter != userInSet.end(); ++userSetIter) {
-
-			stUser* user = *userSetIter;
-			SOCKET socket = user->_socket;
-			CRingBuffer* recvBuffer = user->_recvBuffer;
-
-			if (FD_ISSET(socket, &readSet) == false) {
-				continue;
-			}
-
-			recv(socket, recvBuffer->getDirectPush(), recvBuffer->getDirectFreeSize(), 0);
-
-
-		}
-	} while (false);
-
-	userInSet.clear();
-
-}
-
-void sendPacket() {
-	FD_SET writeSet;
-	int userCnt = 0;
-
-	list<stUser*> userInSet;
-	timeval delayZero;
-	ZeroMemory(&delayZero, sizeof(timeval));
-
-	for (unordered_map<SOCKET, stUser*>::iterator userListIter = userListBegin(); userListIter != userListEnd(); ++userListIter) {
-
-		std::pair<SOCKET, stUser*> pair = *userListIter;
-		SOCKET socket = pair.first;
-		stUser* user = pair.second;
-
-		FD_SET(socket, &writeSet);
-		++userCnt;
-
-		userInSet.push_back(user);
-
-		if (userCnt < 64) {
-			continue;
-		}
-
-		userCnt = 0;
-
-		int selectResult = select(0, nullptr, &writeSet, nullptr, &delayZero);
-
-		if (selectResult == 0) {
-			continue;
-		}
-
-		for (list<stUser*>::iterator userSetIter = userInSet.begin(); userSetIter != userInSet.end(); ++userSetIter) {
-
-			stUser* user = *userSetIter;
-			SOCKET socket = user->_socket;
-			CRingBuffer* sendBuffer = user->_sendBuffer;
-
-			if (FD_ISSET(socket, &writeSet) == false) {
-				continue;
-			}
-
-			send(socket, sendBuffer->getDirectPush(), sendBuffer->getDirectFreeSize(), 0);
-
-		}
-
-		FD_ZERO(&writeSet);
-		userInSet.clear();
-
-	}
-
-	do {
-		if (userInSet.empty() == true) {
-			break;
-		}
-
-		int selectResult = select(0, nullptr, &writeSet, nullptr, &delayZero);
-
-		if (selectResult == 0) {
-			break;
-		}
-
-		for (list<stUser*>::iterator userSetIter = userInSet.begin(); userSetIter != userInSet.end(); ++userSetIter) {
-
-			stUser* user = *userSetIter;
-			SOCKET socket = user->_socket;
-			CRingBuffer* sendBuffer = user->_sendBuffer;
-
-			if (FD_ISSET(socket, &writeSet) == false) {
-				continue;
-			}
-
-			send(socket, sendBuffer->getDirectPush(), sendBuffer->getDirectFreeSize(), 0);
-
-		}
-	} while (false);
-
-	userInSet.clear();
-}
