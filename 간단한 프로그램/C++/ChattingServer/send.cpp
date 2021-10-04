@@ -27,7 +27,7 @@ using std::unordered_set;
 bool CStubFunc::RES_LogInStub(stUser* user, unsigned char result, unsigned int userId) {
 
 	CProtocolBuffer header(6);
-	CProtocolBuffer payload(50);
+	CProtocolBuffer payload(51);
 
 	payload << result;
 	payload << userId;
@@ -83,7 +83,7 @@ bool CStubFunc::RES_RoomListStub(stUser* user){
 
 bool CStubFunc::RES_RoomCreateStub(stUser* user, unsigned char result, unsigned int roomId, unsigned short roomNameSize, wchar_t* roomName)
 {
-	CProtocolBuffer payload(50);
+	CProtocolBuffer payload(52);
 	payload << result;
 	payload << roomId;
 	payload << (unsigned short)(roomNameSize * 2);
@@ -103,10 +103,10 @@ bool CStubFunc::RES_RoomCreateStub(stUser* user, unsigned char result, unsigned 
 
 bool CStubFunc::RES_RoomEnterStub(stUser* user, unsigned char result, unsigned int roomId)
 {
-	CProtocolBuffer payload(50);
+	stRoom* room = roomList->getRoom(roomId);
+	CProtocolBuffer payload(room->_userNum * 34 + 1 + 2 + room->_nameLen * 2 + 4 + 1);
 	payload << result;
 	payload << roomId;
-	stRoom* room = roomList->getRoom(roomId);
 	payload << (unsigned short)(room->_nameLen * 2);
 	payload.putDataW(room->_nameLen, room->_name);
 	payload << room->_userNum;
@@ -129,7 +129,7 @@ bool CStubFunc::RES_RoomEnterStub(stUser* user, unsigned char result, unsigned i
 
 bool CStubFunc::RES_ChatStub(stUser* user, unsigned int userId, unsigned short msgSize, wchar_t* msg) {
 
-	CProtocolBuffer payload(50);
+	CProtocolBuffer payload(54);
 	payload << userId;
 	payload << (unsigned short)(msgSize * 2);
 	payload.putDataW(msgSize, msg);
@@ -152,7 +152,7 @@ bool CStubFunc::RES_ChatStub(stUser* user, unsigned int userId, unsigned short m
 
 bool CStubFunc::RES_RoomLeaveStub(stUser* user, unsigned int userId) {
 
-	CProtocolBuffer payload(50);
+	CProtocolBuffer payload(55);
 	payload << userId;
 
 	CProtocolBuffer header(6);
@@ -173,7 +173,7 @@ bool CStubFunc::RES_RoomLeaveStub(stUser* user, unsigned int userId) {
 
 bool CStubFunc::RES_RoomDeleteStub(stUser* user, unsigned int roomId) {
 
-	CProtocolBuffer payload(50);
+	CProtocolBuffer payload(56);
 	payload << roomId;
 
 	CProtocolBuffer header(6);
@@ -190,7 +190,7 @@ bool CStubFunc::RES_RoomDeleteStub(stUser* user, unsigned int roomId) {
 
 bool CStubFunc::RES_UserEnterStub(stUser* user, unsigned int roomId) {
 
-	CProtocolBuffer payload(50);
+	CProtocolBuffer payload(57);
 	payload.putDataW(15, user->_name);
 	payload << user->_id;
 
