@@ -27,30 +27,72 @@ void unitTest() {
 
 		ZeroMemory(out, 50);
 
-		int bufFree;
-		rb.getFreeSize((UINT*)&bufFree);
+		int bufFree = rb.getFreeSize();
 
 		int maxPushNum = (leftChar > bufFree ? bufFree : leftChar);
 		int pushSize = rand() % maxPushNum + 1;
+		
+		while (pushSize > 0) {
 
+			unsigned int directFreeSize = rb.getDirectFreeSize();
+			unsigned int actualPushSize;
+
+			if (pushSize > directFreeSize) {
+				memcpy(rb.getDirectPush(), strTemp, directFreeSize);
+				actualPushSize = directFreeSize;
+			}
+			else {
+				memcpy(rb.getDirectPush(), strTemp, pushSize);
+				actualPushSize = pushSize;
+			}
+			
+			rb.moveRear(actualPushSize);
+			strTemp += actualPushSize;
+			pushSize -= actualPushSize;
+			leftChar -= actualPushSize;
+		}
+		
+		/*
 		rb.push(pushSize, strTemp);
-
 		strTemp += pushSize;
-
 		leftChar -= pushSize;
+		*/
 
 		if (leftChar == 0) {
 			strTemp = a;
 			leftChar = 18;
 		}
 
-		int bufSize;
-		rb.getUsedSize((UINT*)&bufSize);
+		int bufSize = rb.getUsedSize();
 
 		int popSize = rand() % bufSize + 1;
 
+		unsigned char* outTemp = out;
+		while (popSize > 0) {
+
+			unsigned int directUsedSize = rb.getDirectUsedSize();
+			unsigned int actualPopSize;
+
+			if (popSize > directUsedSize) {
+				memcpy(outTemp, rb.getDirectFront(), directUsedSize);
+				actualPopSize = directUsedSize;
+			}
+			else {
+				memcpy(outTemp, rb.getDirectFront(), popSize);
+				actualPopSize = popSize;
+			}
+
+			rb.moveFront(actualPopSize);
+			outTemp += actualPopSize;
+			popSize -= actualPopSize;
+
+		}
+
+		/*
 		rb.front(popSize, out);
 		rb.pop(popSize);
+		*/
+
 
 		printf("%s", out);
 
@@ -102,7 +144,7 @@ void speedCheck() {
 
 int main() {
 
-	speedCheck();
+	unitTest();
 
 	return 0;
 }

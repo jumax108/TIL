@@ -23,8 +23,7 @@ CRingBuffer::~CRingBuffer() {
 bool CRingBuffer::push(unsigned int size, const unsigned char* buffer) {
 
 
-	unsigned int freeSize;
-	getFreeSize(&freeSize);
+	unsigned int freeSize = getFreeSize();
 	if (freeSize < size) {
 		return false;
 	}
@@ -53,8 +52,7 @@ bool CRingBuffer::push(unsigned int size, const unsigned char* buffer) {
 
 bool CRingBuffer::pop(unsigned int size) {
 
-	unsigned int usedSize;
-	getUsedSize(&usedSize);
+	unsigned int usedSize = getUsedSize();
 	if (usedSize < size) {
 		return false;
 	}
@@ -66,8 +64,7 @@ bool CRingBuffer::pop(unsigned int size) {
 
 bool CRingBuffer::front(unsigned int size, unsigned char* buffer) {
 
-	unsigned int usedSize;
-	getUsedSize(&usedSize);
+	unsigned int usedSize = getUsedSize();
 	if (usedSize < size) {
 		return false;
 	}
@@ -93,26 +90,65 @@ bool CRingBuffer::front(unsigned int size, unsigned char* buffer) {
 
 }
 
-void CRingBuffer::getFreeSize(unsigned int* size) {
+unsigned int CRingBuffer::getFreeSize() {
 
-	unsigned int usedSize;
-	getUsedSize(&usedSize);
-	*size = _capacity - usedSize;
+	return  _capacity - getUsedSize();
 
 }
 
-void CRingBuffer::getUsedSize(unsigned int* size) {
+unsigned int  CRingBuffer::getUsedSize() {
 
 	if (_rear >= _front) {
 
-		*size = _rear - _front;
+		return _rear - _front;
 
 	}
 	else {
 
-		*size = _capacity + 1 - _front;
-		*size += _rear;
+		return _rear + _capacity + 1 - _front;
 
 	}
 
+}
+
+unsigned char* CRingBuffer::getDirectPush() {
+	return &_buffer[_rear];
+}
+
+unsigned char* CRingBuffer::getDirectFront() {
+	return &_buffer[_front];
+}
+
+bool CRingBuffer::moveFront(unsigned int size) {
+	if (size > getDirectUsedSize()) {
+		return false;
+	}
+
+	_front = (_front + size) % (_capacity + 1);
+	return true;
+}
+
+bool CRingBuffer::moveRear(unsigned int size) {
+
+	if (size > getDirectFreeSize()) {
+		return false;
+	}
+
+	_rear = (_rear + size) % (_capacity + 1);
+	return true;
+
+}
+
+unsigned int CRingBuffer::getDirectFreeSize() {
+	if (_front > _rear) {
+		return _front - _front - 1;
+	}
+	return _capacity + 1 - _rear;
+}
+
+unsigned int CRingBuffer::getDirectUsedSize() {
+	if (_front < _rear) {
+		return _rear - _front;
+	}
+	return _capacity + 1 - _front;
 }

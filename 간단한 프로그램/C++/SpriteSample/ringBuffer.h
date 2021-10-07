@@ -2,15 +2,16 @@
 
 class CRingBuffer {
 
+	
+
 public:
 
-	CRingBuffer() {}
-	CRingBuffer(UINT capacity);
+	CRingBuffer(unsigned int capacity = 100);
 	~CRingBuffer();
 
-	bool push(UINT size, const char* buffer);
-	bool pop(UINT size);
-	bool front(UINT size, char* buffer);
+	bool push(unsigned int size, const char* buffer);
+	bool pop(unsigned int size);
+	bool front(unsigned int size, char* buffer);
 
 	inline int capacity() {
 		return _capacity;
@@ -24,41 +25,23 @@ public:
 		return _front;
 	}
 
-	inline int getDirectFreeSize() {
+	char* getDirectPush();
+	char* getDirectFront();
 
-		return _capacity + (_front != 0) - _rear;
+	unsigned int getUsedSize();
+	unsigned int getFreeSize();
 
-	}
+	unsigned int getDirectFreeSize();
+	unsigned int getDirectUsedSize();
 
-	inline int getDirectUsedSize() {
-
-		return _capacity +1 - _front;
-
-	}
-
-	inline char* getRearPtr() {
-		return &_buffer[_rear];
-	}
-
-	inline char* getFrontPtr() {
-		return &_buffer[_front];
-	}
-
-	inline void moveRear(UINT size) {
-		_rear = (_rear + size) % (_capacity + 1);
-	}
-	inline void moveFront(UINT size) {
-		_front = (_front + size) % (_capacity + 1);
-	}
-
-	void getUsedSize(UINT* size); 
-	void getFreeSize(UINT* size);
+	bool moveFront(unsigned int);
+	bool moveRear(unsigned int);
 
 private:
 
 	char* _buffer;
-	UINT _capacity;
-	UINT _rear;
-	UINT _front;
+	unsigned int _capacity;
+	unsigned int _rear;
+	unsigned int _front;
 
 };

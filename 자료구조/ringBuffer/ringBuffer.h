@@ -2,6 +2,8 @@
 
 class CRingBuffer {
 
+	
+
 public:
 
 	CRingBuffer(unsigned int capacity);
@@ -23,8 +25,17 @@ public:
 		return _front;
 	}
 
-	void getUsedSize(unsigned int* size); 
-	void getFreeSize(unsigned int* size);
+	unsigned char* getDirectPush();
+	unsigned char* getDirectFront();
+
+	unsigned int getUsedSize();
+	unsigned int getFreeSize();
+
+	unsigned int getDirectFreeSize();
+	unsigned int getDirectUsedSize();
+
+	bool moveFront(unsigned int);
+	bool moveRear(unsigned int);
 
 private:
 

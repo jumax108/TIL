@@ -30,6 +30,18 @@ CSprite::CSprite(CSpriteData* aniData, void (*updateFunc)(CSprite* sprite, void*
 	_effect._doneSingleTime = true;
 }
 
+CSprite::~CSprite() {
+
+	_isLive = false;
+	_id = 0;
+	_x = -1;
+	_y = -1;
+	_update = nullptr;
+	_currentAnimationIndex = 0;
+	_oldAnimationIndex = 0;
+
+}
+
 void CSprite::update(void* argv) {
 
 	if(_update != nullptr)
@@ -60,16 +72,20 @@ void CSprite::create(int x, int y) {
 }
 
 void CSprite::draw(float redRatio, float blueRatio, float greenRatio) {
+
+	int printX = _x - rtCamera.left;
+	int printY = _y - rtCamera.top;
+
 	if (_shadow != nullptr) {
-		_shadow->draw(_x, _y);
+		_shadow->draw(printX, printY);
 	}
 	if (_hpBar != nullptr) {
-		_hpBar->draw(_x, _y, (float)_nowHp / _maxHp);
+		_hpBar->draw(printX, printY, (float)_nowHp / _maxHp);
 	}
 	if (_effect._doneSingleTime == false) {
-		_effect.draw(_x, _y);
+		_effect.draw(printX, printY);
 	}
-	(*_aniData)[_currentAnimationIndex + (int)_seeRight]->draw(_x, _y, redRatio, blueRatio, greenRatio);
+	(*_aniData)[_currentAnimationIndex + (int)_seeRight]->draw(printX, printY, redRatio, blueRatio, greenRatio);
 
 
 }

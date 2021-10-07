@@ -170,3 +170,11 @@ struct stSC_DAMAGE{
 #pragma pack()
 
 
+#define SC_SYNC						251
+#pragma pack(1)
+struct stSC_SYNC {
+	unsigned int id;
+	unsigned short x;
+	unsigned short y;
+};
+#pragma pack()

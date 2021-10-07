@@ -39,6 +39,7 @@ public:
 		packet << x;
 		packet << y;
 		packet << hp;
+
 		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
 
 		if (network->ableSendPacket == true) {
@@ -72,6 +73,9 @@ public:
 		packet << direction;
 		packet << x;
 		packet << y;
+
+		printf("dir: %d, x: %d, y: %d\n",direction, x, y);
+
 		sendBuffer->push(packet.getUsedSize(), packet.getFrontPtr());
 
 

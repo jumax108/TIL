@@ -27,14 +27,20 @@ HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
 
+const int TILE_SIZE = 64;
+const int MAP_HEIGHT = 6400;
+const int MAP_WIDTH = 6400;
+
 const int CLIENT_WIDTH = 640;
 const int CLIENT_HEIGHT = 480;
 
 HDC hMemDC;
 HBITMAP hBufBmp;
 RECT rtClient;
+RECT rtCamera;
 
-BYTE* backgroundBuf;
+unsigned char _bgTile[MAP_HEIGHT / TILE_SIZE][MAP_WIDTH / TILE_SIZE] = { 0, };
+CImage* _tile;
 CSpriteData* spriteData;
 CSprite* user[50];
 CSprite* mySprite;
@@ -174,7 +180,7 @@ void userUpdate(CSprite* sprite, void* argv) {
 
         switch (*(INPUT_MESSAGE*)argv) {
         case INPUT_MESSAGE::MOVE_DD:
-            if(sprite->_y + 2 < 470)
+            if(sprite->_y + 2 < MAP_HEIGHT)
                 sprite->_y += 2;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
@@ -183,7 +189,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_LD:
-            if (sprite->_y + 2 < 470 && sprite->_x - 3 > 10) {
+            if (sprite->_y + 2 < MAP_HEIGHT && sprite->_x - 3 > 0) {
                 sprite->_y += 2;
                 sprite->_x -= 3;
             }
@@ -194,7 +200,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_LL:
-            if (sprite->_x - 3 > 10)
+            if (sprite->_x - 3 > 0)
                 sprite->_x -= 3;
             sprite->_seeRight = false;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
@@ -203,7 +209,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_LU:
-            if (sprite->_x - 3 > 10 && sprite->_y - 2 > 50) {
+            if (sprite->_x - 3 > 0 && sprite->_y - 2 > 0) {
                 sprite->_x -= 3;
                 sprite->_y -= 2;
             }
@@ -214,7 +220,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_RD:
-            if (sprite->_x + 3 < 630 && sprite->_y + 2 < 470) {
+            if (sprite->_x + 3 < MAP_WIDTH && sprite->_y + 2 < MAP_HEIGHT) {
                 sprite->_x += 3;
                 sprite->_y += 2;
             }
@@ -225,7 +231,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_RR:
-            if (sprite->_x + 3 < 630)
+            if (sprite->_x + 3 < MAP_HEIGHT)
                 sprite->_x += 3;
             sprite->_seeRight = true;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
@@ -234,7 +240,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_RU:
-            if (sprite->_x + 3 < 630 && sprite->_y - 2 > 50) {
+            if (sprite->_x + 3 < MAP_HEIGHT && sprite->_y - 2 > 0) {
                 sprite->_x += 3;
                 sprite->_y -= 2;
             }
@@ -245,7 +251,7 @@ void userUpdate(CSprite* sprite, void* argv) {
             }
             break;
         case INPUT_MESSAGE::MOVE_UU:
-            if (sprite->_y - 2 > 50)
+            if (sprite->_y - 2 > 0)
                 sprite->_y -= 2;
             if (sprite->_oldMsg != sprite->_msg || userCurAniIdx != 2) {
                 sprite->setAnimation(2);
@@ -309,6 +315,15 @@ void update() {
 
         }
     }
+
+    if (mySprite != nullptr) {
+
+        rtCamera.left = MAX(mySprite->_x - CLIENT_WIDTH / 2,0);
+        rtCamera.top = MAX(mySprite->_y - CLIENT_HEIGHT / 2,0);
+        rtCamera.right = MIN(rtCamera.left + CLIENT_WIDTH, MAP_WIDTH);
+        rtCamera.bottom = MIN(rtCamera.top + CLIENT_HEIGHT, MAP_HEIGHT);
+
+    }
 }
 
 void render(HWND hWnd) {
@@ -332,7 +347,41 @@ void render(HWND hWnd) {
 
     // ----------------------------------------------------------------------
     // 배경 출력
-    memcpy(bmpBuf, backgroundBuf, bufSize);
+    int tileXCnt = MAX(rtCamera.left / TILE_SIZE - 1, 0);
+    int tileYCnt = MAX(rtCamera.top / TILE_SIZE - 1, 0); 
+
+    int heightCnt = 0 - rtCamera.top % TILE_SIZE;
+    int widthCnt = 0 - rtCamera.left % TILE_SIZE;
+
+    int mapTileXNum = MAP_WIDTH / TILE_SIZE;
+    int mapTileYNum = MAP_HEIGHT / TILE_SIZE;
+
+    int clientTileXNum = CLIENT_WIDTH / TILE_SIZE;
+    int clientTileYNum = CLIENT_HEIGHT / TILE_SIZE;
+
+    int tileXNum = tileXCnt + clientTileXNum + 2;
+    int tileYNum = tileYCnt + clientTileYNum + 2;
+
+    if (tileXNum >= mapTileXNum) {
+        tileXNum = mapTileXNum;
+        tileXCnt = tileXNum - clientTileXNum - 1;
+    }
+
+    if (tileYNum >= mapTileYNum) {
+        tileYNum = mapTileYNum;
+        tileYCnt = tileYNum - clientTileYNum - 1;
+    }
+
+    int startTileX = tileXCnt;
+    for (; tileYCnt < tileYNum; tileYCnt += 1, heightCnt += 64) {
+        tileXCnt = startTileX;
+        widthCnt =0- rtCamera.left % TILE_SIZE;
+        for (; tileXCnt < tileXNum; tileXCnt += 1, widthCnt += 64) {
+            _tile[_bgTile[tileYCnt][tileXCnt]].draw(widthCnt, heightCnt);
+        }
+    }
+
+    //memcpy(bmpBuf, backgroundBuf[0], bufSize);
     // ----------------------------------------------------------------------
 
     for (int userCnt = 0; userCnt < 50; userCnt++) {
@@ -424,7 +473,6 @@ BYTE* loadImage(const WCHAR* fileDir, int* width = nullptr, int* height = nullpt
     bmpInfo.biSize = sizeof(BITMAPINFOHEADER);
     fread(&bmpHead, sizeof(BITMAPFILEHEADER), 1, bmpFile);
     fread(&bmpInfo, sizeof(BITMAPINFOHEADER), 1, bmpFile);
-    //bmpInfo.biHeight = -bmpInfo.biHeight;
     DWORD bufSize = sizeof(BYTE) * bmpInfo.biHeight * bmpInfo.biWidth * 4;
     buf = (BYTE*)malloc(bufSize);
     reverseBuf = (BYTE*)malloc(bufSize);
@@ -457,11 +505,14 @@ void init(HWND hWnd) {
     
     QueryPerformanceFrequency(&freq);
     freq.QuadPart = freq.QuadPart / 1000000;
-    CScreenDib::setInstance(640, 480, 32);
+    CScreenDib::setInstance(MAP_WIDTH, MAP_HEIGHT, 32);
 
     // ----------------------------------------------------------------------
     // 배경 로드
-    backgroundBuf = loadImage(L"Sprite_Data\\_Map.bmp");
+    unsigned int tileNum = 1;
+    _tile = (CImage*)malloc(sizeof(CImage) * tileNum);
+    new (&_tile[0]) CImage(L"Sprite_Data\\Tile_01.bmp", 0, 0, 0xFF00FF);
+    //backgroundBuf[0] = loadImage(L"Sprite_Data\\Tile_01.bmp");
     // ----------------------------------------------------------------------
 
     DWORD aniNum = 10;

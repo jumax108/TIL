@@ -48,7 +48,7 @@ private:
 
 	SOCKET sock;
 	const WCHAR* SERVER_IP = L"127.0.0.1";
-	const USHORT SERVER_PORT = 5000;
+	const USHORT SERVER_PORT = 20000;
 
 };
 

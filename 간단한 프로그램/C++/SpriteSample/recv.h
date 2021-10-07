@@ -15,6 +15,7 @@ public:
 	virtual bool CS_Attack3Proxy(char direction, short x, short y){ return false; }
 	virtual bool SC_Attack3Proxy(int id, char direction, short x, short y){ return false; }
 	virtual bool SC_DamageProxy(int attackId, int damageId, char damageHp){ return false; }
+	virtual bool SC_SyncProxy(unsigned int id, unsigned short x, unsigned short y) { return false; }
 	 
 	void packetProc(stHeader* header, CProtocolBuffer* payload, CProxyFuncBase* proxy) {
 		switch (header->payloadType) {
@@ -202,6 +203,7 @@ class CProxyFunc : public CProxyFuncBase {
 	virtual bool SC_Attack2Proxy(int id, char direction, short x, short y);
 	virtual bool SC_Attack3Proxy(int id, char direction, short x, short y);
 	virtual bool SC_DamageProxy(int attackId, int damageId, char damageHp);
+	virtual bool SC_SyncProxy(unsigned int id, unsigned short x, unsigned short y);
 
 }; 
 

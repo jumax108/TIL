@@ -6,7 +6,7 @@
 #define min(a, b) (a>b?b:a)
 #define max(a, b) (a>b?a:b)
 
-CRingBuffer::CRingBuffer(UINT capacity) {
+CRingBuffer::CRingBuffer(unsigned int capacity) {
 	_capacity = capacity;
 	_buffer = (char*)malloc(capacity + 1);
 	ZeroMemory(_buffer, capacity + 1);
@@ -20,16 +20,15 @@ CRingBuffer::~CRingBuffer() {
 	free(_buffer);
 }
 
-bool CRingBuffer::push(UINT size, const char* buffer) {
+bool CRingBuffer::push(unsigned int size, const char* buffer) {
 
 
-	UINT freeSize;
-	getFreeSize(&freeSize);
+	unsigned int freeSize = getFreeSize();
 	if (freeSize < size) {
 		return false;
 	}
 
-	UINT rearTemp = _rear;
+	unsigned int rearTemp = _rear;
 
 	do {
 
@@ -51,10 +50,9 @@ bool CRingBuffer::push(UINT size, const char* buffer) {
 
 }
 
-bool CRingBuffer::pop(UINT size) {
+bool CRingBuffer::pop(unsigned int size) {
 
-	UINT usedSize;
-	getUsedSize(&usedSize);
+	unsigned int usedSize = getUsedSize();
 	if (usedSize < size) {
 		return false;
 	}
@@ -64,10 +62,9 @@ bool CRingBuffer::pop(UINT size) {
 	return true;
 }
 
-bool CRingBuffer::front(UINT size, char* buffer) {
+bool CRingBuffer::front(unsigned int size, char* buffer) {
 
-	UINT usedSize;
-	getUsedSize(&usedSize);
+	unsigned int usedSize = getUsedSize();
 	if (usedSize < size) {
 		return false;
 	}
@@ -93,26 +90,65 @@ bool CRingBuffer::front(UINT size, char* buffer) {
 
 }
 
-void CRingBuffer::getFreeSize(UINT* size) {
+unsigned int CRingBuffer::getFreeSize() {
 
-	UINT usedSize;
-	getUsedSize(&usedSize);
-	*size = _capacity - usedSize;
+	return  _capacity - getUsedSize();
 
 }
 
-void CRingBuffer::getUsedSize(UINT* size) {
+unsigned int  CRingBuffer::getUsedSize() {
 
 	if (_rear >= _front) {
 
-		*size = _rear - _front;
+		return _rear - _front;
 
 	}
 	else {
 
-		*size = _capacity + 1 - _front;
-		*size += _rear;
+		return _rear + _capacity + 1 - _front;
 
 	}
 
+}
+
+char* CRingBuffer::getDirectPush() {
+	return &_buffer[_rear];
+}
+
+char* CRingBuffer::getDirectFront() {
+	return &_buffer[_front];
+}
+
+bool CRingBuffer::moveFront(unsigned int size) {
+	if (size > getDirectUsedSize()) {
+		return false;
+	}
+
+	_front = (_front + size) % (_capacity + 1);
+	return true;
+}
+
+bool CRingBuffer::moveRear(unsigned int size) {
+
+	if (size > getDirectFreeSize()) {
+		return false;
+	}
+
+	_rear = (_rear + size) % (_capacity + 1);
+	return true;
+
+}
+
+unsigned int CRingBuffer::getDirectFreeSize() {
+	if (_front > _rear) {
+		return _front - _rear - 1;
+	}
+	return _capacity + 1 - _rear;
+}
+
+unsigned int CRingBuffer::getDirectUsedSize() {
+	if (_front < _rear) {
+		return _rear - _front;
+	}
+	return _capacity + 1 - _front;
 }

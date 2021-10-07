@@ -15,6 +15,8 @@ enum class INPUT_MESSAGE {
 	ATTACK3
 };
 
+extern RECT rtCamera;
+
 class CSpriteData;
 
 class CSprite {
@@ -23,6 +25,7 @@ public:
 
 	CSprite() {}
 	CSprite(CSpriteData* aniData, void (*updateFunc)(CSprite* sprite, void* argv));
+	~CSprite();
 
 	void update(void* argv);
 	void draw(float redRatio = 1, float blueRatio = 1, float greenRatio = 1);

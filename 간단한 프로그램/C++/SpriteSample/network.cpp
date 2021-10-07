@@ -119,20 +119,20 @@ bool CNetwork::recvPacket() {
 
 	while (1) {
 		short readSize = recvBuffer.getDirectFreeSize();
-		int recvResult = recv(sock, recvBuffer.getRearPtr(), readSize, 0);
+		int recvResult = recv(sock, recvBuffer.getDirectPush(), readSize, 0);
 		int recvError;
 		if (recvResult == SOCKET_ERROR) {
 			errorOutputFunc(L"recv error", &recvError);
 			if (recvError == WSAEWOULDBLOCK) {
 				break;
 			}
+			int k = 1;
 			return false;
 		}
 		recvBuffer.moveRear(recvResult);
 	}
 
-	unsigned int usedSize;
-	recvBuffer.getUsedSize(&usedSize);
+	unsigned int usedSize = recvBuffer.getUsedSize();
 	CProtocolBuffer* protocolBuffer = nullptr;
 	while (usedSize >= sizeof(stHeader)) {
 		stHeader header;
@@ -147,7 +147,7 @@ bool CNetwork::recvPacket() {
 		protocolBuffer->moveRear(header.payloadSize);
 		recvBuffer.pop(header.payloadSize);
 		proxy->packetProc(&header, protocolBuffer, proxy);
-		recvBuffer.getUsedSize(&usedSize);
+		usedSize = recvBuffer.getUsedSize();
 	}
 
 	delete(protocolBuffer);
@@ -159,17 +159,16 @@ bool CNetwork::recvPacket() {
 bool CNetwork::sendPacket() {
 
 	while (1) {
-		UINT sendBufUsedSize;
-		sendBuffer.getUsedSize(&sendBufUsedSize);
+		UINT sendBufUsedSize = sendBuffer.getUsedSize();
 		if (sendBufUsedSize == 0) {
 			break;
 		}
 
 		UINT sendSize = min(sendBuffer.getDirectUsedSize(), sendBufUsedSize);
-		char* buf = sendBuffer.getFrontPtr();
-		stHeader* header = (stHeader*)buf;
-		printf("%x\n", header->code);
-		int sendResult = send(sock, buf, sendSize, 0);
+
+		//char* buf = sendBuffer.getDirectFront();
+
+		int sendResult = send(sock, sendBuffer.getDirectFront(), sendSize, 0);
 		int sendError;
 		if (sendResult == SOCKET_ERROR) {
 			errorOutputFunc(L"send error", &sendError);

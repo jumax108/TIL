@@ -27,6 +27,9 @@ bool CProxyFunc::SC_MoveStartProxy(int id, char direction, short x, short y) {
         }
 
     }
+
+    wprintf(L"recv Move Start, id: %d\n", id);
+
     return false;
 }
 bool CProxyFunc::SC_CreateMyCharacterProxy(int id, char direction, short x, short y, char hp) {
@@ -50,6 +53,7 @@ bool CProxyFunc::SC_CreateMyCharacterProxy(int id, char direction, short x, shor
 
     mySprite = newUser;
 
+    wprintf(L"recv create my character, id: %d\n", id);
     return true;
 }
 
@@ -71,18 +75,23 @@ bool CProxyFunc::SC_OtherMyCharacterProxy(int id, char direction, short x, short
     newUser->_hpBar = _hpBar;
     newUser->_effect = *_effect;
 
+    wprintf(L"recv create other character, id: %d\n", id);
     return true;
 }
 
 bool CProxyFunc::SC_DeleteCharacterProxy(int id) {
     CSprite** userListEnd = user + 50;
 
+    wprintf(L"recv delete character, id: %d\n", id);
     for (CSprite** userIter = user; userIter != userListEnd; ++userIter) {
 
         CSprite* ptrUser = *userIter;
         if (id == ptrUser->_id) {
 
             ptrUser->_isLive = false;
+            ptrUser->_id = 0;
+            //ptrUser->~CSprite();
+
             userIndex->push(userIter - user);
             return true;
         }
@@ -109,6 +118,7 @@ bool CProxyFunc::SC_MoveStopProxy(int id, char direction, short x, short y) {
         }
 
     }
+    wprintf(L"recv move stop character, id: %d\n", id);
     return false;
 
 }
@@ -128,6 +138,7 @@ bool CProxyFunc::SC_Attack1Proxy(int id, char direction, short x, short y) {
             return true;
         }
     }
+    wprintf(L"recv attack 1 character, id: %d\n", id);
     return false;
 }
 
@@ -146,6 +157,7 @@ bool CProxyFunc::SC_Attack2Proxy(int id, char direction, short x, short y) {
             return true;
         }
     }
+    wprintf(L"recv attack 2 character, id: %d\n", id);
     return false;
 }
 
@@ -165,6 +177,7 @@ bool CProxyFunc::SC_Attack3Proxy(int id, char direction, short x, short y) {
         }
 
     }
+    wprintf(L"recv attack 3 character, id: %d\n", id);
     return false;
 }
 
@@ -192,12 +205,24 @@ bool CProxyFunc::SC_DamageProxy(int attackId, int damageId, char damageHp) {
     damageSprite->_nowHp = damageHp;
     damageSprite->_effect._doneSingleTime = false;
     damageSprite->_effect._currentImageIndex = 0;
+    wprintf(L"recv damager, id: %d\n", attackId);
     return true;
 }
-/*
-void CNetwork::recv_DAMAGE(UINT attackId, UINT damageId, BYTE damageHp) {
 
-    
+bool CProxyFunc::SC_SyncProxy(unsigned int id, unsigned short x, unsigned short y) {
 
+    CSprite** userListEnd = user + 50;
+
+    for (CSprite** userIter = user; userIter != userListEnd; ++userIter) {
+
+        CSprite* pUser = *userIter;
+
+        if (pUser->_id == id) {
+            pUser->_x = x;
+            pUser->_y = y;
+        }
+
+    }
+
+    return false;
 }
-*/
