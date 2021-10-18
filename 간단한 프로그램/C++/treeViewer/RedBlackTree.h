@@ -4,6 +4,8 @@ class SimpleProfiler;
 
 extern SimpleProfiler* sp;
 
+extern RECT windowRect;
+
 template<typename T>
 class CRedBlackTree {
 
@@ -400,13 +402,34 @@ FIN:
 	}
 
 	void print(HDC hdc, int x) {
-		if (_root->_isNill == true) {
-			return;
-		}
+		do {
+			if (_root->_isNill == true) {
+				break;
+			}
 
-		_hdc = hdc;
-		int printCnt = 0;
-		printLoop(_root, 0, &printCnt, x);
+			_hdc = hdc;
+			int printCnt = 0;
+			printLoop(_root, 0, &printCnt, x);
+		} while (false);
+		{
+			// 우측 상단 조작키 설명
+
+			int left = windowRect.right - 200;
+			int top = 0;
+			int right = windowRect.right - 10;
+			int bottom = 125;
+
+			Rectangle(hdc, left, top, right, bottom);
+
+			TextOutW(hdc, left + 10, top + 10, L"좌측이동 : a", 8);
+			TextOutW(hdc, left + 10, top + 25, L"우측이동 : d", 8);
+			TextOutW(hdc, left + 10, top + 40, L"랜덤추가 : z", 8);
+			TextOutW(hdc, left + 10, top + 55, L"랜덤제거 : x", 8);
+			TextOutW(hdc, left + 10, top + 70, L"테스트코드 실행 : c", 12);
+			TextOutW(hdc, left + 10, top + 85, L"선택값 삽입 : q", 10);
+			TextOutW(hdc, left + 10, top + 100, L"선택값 제거 : e", 10);
+
+		}
 
 	}
 
@@ -1055,10 +1078,13 @@ private:
 		SelectObject(_hdc, oldEllipseBrush);
 		DeleteObject(ellipseBrush);
 
+
 		WCHAR text[10] = { 0, };
 		_itow_s(node->_data, text, 10, 10);
 		TextOutW(_hdc, ellipseRect.left + 40 - x, ellipseRect.top + 40, text, wcslen(text));
 
+		SetTextColor(_hdc, RGB(0, 0, 0));
+		SetBkColor(_hdc, RGB(255, 255, 255));
 		int nodePrintCnt = *printCnt;
 		*printCnt += 1;
 

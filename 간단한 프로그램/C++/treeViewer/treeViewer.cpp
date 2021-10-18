@@ -20,6 +20,8 @@ TREE_CLASS* tree;
 using namespace std;
 vector<int> addValue;
 
+RECT windowRect;
+
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
@@ -156,6 +158,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             tree = new TREE_CLASS();
             srand(500);
+
+            GetWindowRect(hWnd, &windowRect);
+            windowRect.right -= windowRect.left;
+            windowRect.bottom -= windowRect.top;
+            windowRect.left = 0;
+            windowRect.top = 0;
+            InvalidateRect(hWnd, nullptr, true);
+
         }
         break;
     case WM_COMMAND:
@@ -285,6 +295,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 tree->insert(value);
                 addValue.push_back(value);
 
+                inputCnt = 0;
+
             }
                 break;
 
@@ -303,6 +315,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (iter != addValue.end()) {
                     addValue.erase(addValue.begin() + index);
                 }
+                inputCnt = 0;
             }
                 break;
         }
