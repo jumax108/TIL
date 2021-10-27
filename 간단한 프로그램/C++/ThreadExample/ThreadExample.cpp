@@ -6,9 +6,9 @@
 #define TEST
 
 
-//#define INTERLOCK
+#define INTERLOCK
 //#define CRITICALSECTION
-#define SRW
+//#define SRW
 
 int data;
 int connectNum;
@@ -177,7 +177,9 @@ unsigned int __stdcall disconnectFunc(void* argList) {
 unsigned int __stdcall updateInterlockFunc(void* arg) {
 
 	#ifdef TEST
-		srand((unsigned int)arg);
+		unsigned int seed = (unsigned int)arg;
+		srand(seed);
+		wprintf(L"%10s: %10s: %4d\n", L"update", L"seed", seed);
 	#endif
 
 	for (;;) {
@@ -210,7 +212,9 @@ unsigned int __stdcall updateInterlockFunc(void* arg) {
 #ifdef CRITICALSECTION
 unsigned int __stdcall updateCriticalSectionFunc(void* arg) {
 	#ifdef TEST
-		srand((unsigned int)arg);
+		unsigned int seed = (unsigned int)arg;
+		srand(seed);
+		wprintf(L"%10s: %10s: %4d\n", L"update", L"seed", seed);
 	#endif
 
 	for (;;) {
@@ -247,7 +251,9 @@ unsigned int __stdcall updateCriticalSectionFunc(void* arg) {
 unsigned int __stdcall updateSrwFunc(void* arg) {
 	
 	#ifdef TEST
-		srand((unsigned int)arg);
+		unsigned int seed = (unsigned int)arg;
+		srand(seed);
+		wprintf(L"%10s: %10s: %4d\n", L"update", L"seed", seed);
 	#endif
 
 	for (;;) {
