@@ -16,12 +16,12 @@ struct stRoom {
 	wchar_t* _name;
 
 	unsigned char _userNum;
-	using USERLIST_TYPE = unordered_map<unsigned int, stUser*>;
+	using USERLIST_TYPE = unordered_map<SOCKET, stUser*>;
 	USERLIST_TYPE _userList;
 	stRoom::USERLIST_TYPE::iterator userListBegin();
 	stRoom::USERLIST_TYPE::iterator userListEnd();
 	unsigned char userListSize();
-	void userListInsert(unsigned int, stUser*);
+	void userListInsert(SOCKET, stUser*);
 
 	void leaveRoom(unsigned int userId);
 
