@@ -2,16 +2,14 @@
 
 class CRingBuffer {
 
-
-
 public:
 
 	CRingBuffer(unsigned int capacity);
 	~CRingBuffer();
 
-	bool push(unsigned int size, const char* buffer);
+	bool push(unsigned int size, const void* buffer);
 	bool pop(unsigned int size);
-	bool front(unsigned int size, char* buffer);
+	bool front(unsigned int size, void* buffer);
 
 	inline int capacity() {
 		return _capacity;

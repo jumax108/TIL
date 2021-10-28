@@ -179,7 +179,7 @@ unsigned int __stdcall updateInterlockFunc(void* arg) {
 	#ifdef TEST
 		unsigned int seed = (unsigned int)arg;
 		srand(seed);
-		wprintf(L"%10s: %10s: %4d\n", L"update", L"seed", seed);
+		wprintf(L"%10s: %10s: %d\n", L"update", L"seed", seed);
 	#endif
 
 	for (;;) {

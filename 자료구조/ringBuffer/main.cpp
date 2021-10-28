@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <Windows.h>
 #include <time.h>
+#include <thread>
+#include <conio.h>
 
 #include "ringBuffer.h"
 
@@ -8,100 +10,55 @@
 
 SimpleProfiler sp;
 
-CRingBuffer rb(20);
+constexpr int BUFFER_SIZE = 50;
+CRingBuffer rb(BUFFER_SIZE);
+
+const char* orgStr = "12345678 abcdefgh ";
+
+unsigned __stdcall unitTestPushFunc(void*);
+unsigned __stdcall unitTestPopFunc(void*);
+
+bool beShutdown;
 
 void unitTest() {
 
-	
-	BYTE* a = (BYTE*)"12345678 abcdefgh ";
+	constexpr unsigned int seed = 0;
+	srand(seed);
 
-	srand(1008);
+	beShutdown = false;
 
-	BYTE out[50] = {0,};
+	HANDLE pushThread = (HANDLE)_beginthreadex(nullptr, 0, unitTestPushFunc, (void*)&seed, 0, nullptr);
+	HANDLE popThread = (HANDLE)_beginthreadex(nullptr, 0, unitTestPopFunc, (void*)&seed, 0, nullptr);
 
-	BYTE* strTemp = a;
-	 
-	int leftChar = 18;
-
-	for (;;) {
-
-		ZeroMemory(out, 50);
-
-		int bufFree = rb.getFreeSize();
-
-		int maxPushNum = (leftChar > bufFree ? bufFree : leftChar);
-		int pushSize = rand() % maxPushNum + 1;
-		
-		while (pushSize > 0) {
-
-			unsigned int directFreeSize = rb.getDirectFreeSize();
-			unsigned int actualPushSize;
-
-			if (pushSize > directFreeSize) {
-				memcpy(rb.getDirectPush(), strTemp, directFreeSize);
-				actualPushSize = directFreeSize;
-			}
-			else {
-				memcpy(rb.getDirectPush(), strTemp, pushSize);
-				actualPushSize = pushSize;
-			}
-			
-			rb.moveRear(actualPushSize);
-			strTemp += actualPushSize;
-			pushSize -= actualPushSize;
-			leftChar -= actualPushSize;
+	// 스페이스 입력 대기
+	{
+		while (_getch() != ' ') {
+			Sleep(0);
 		}
-		
-		/*
-		rb.push(pushSize, strTemp);
-		strTemp += pushSize;
-		leftChar -= pushSize;
-		*/
-
-		if (leftChar == 0) {
-			strTemp = a;
-			leftChar = 18;
-		}
-
-		int bufSize = rb.getUsedSize();
-
-		int popSize = rand() % bufSize + 1;
-
-		unsigned char* outTemp = out;
-		while (popSize > 0) {
-
-			unsigned int directUsedSize = rb.getDirectUsedSize();
-			unsigned int actualPopSize;
-
-			if (popSize > directUsedSize) {
-				memcpy(outTemp, rb.getDirectFront(), directUsedSize);
-				actualPopSize = directUsedSize;
-			}
-			else {
-				memcpy(outTemp, rb.getDirectFront(), popSize);
-				actualPopSize = popSize;
-			}
-
-			rb.moveFront(actualPopSize);
-			outTemp += actualPopSize;
-			popSize -= actualPopSize;
-
-		}
-
-		/*
-		rb.front(popSize, out);
-		rb.pop(popSize);
-		*/
-
-
-		printf("%s", out);
-
-		//printf("%s %d %d\n", out,rb._front, rb._rear);
-
-		//system("PAUSE>NUL");
 	}
-	
 
+	// 스레드 종료 유도
+	{
+		beShutdown = true;
+	}
+
+	// 스레드 종료 대기
+	{
+		HANDLE threads[2];
+		threads[0] = pushThread;
+		threads[1] = popThread;
+
+		WaitForMultipleObjects(2, threads, true, INFINITE);
+	}
+
+
+	// 스레드 정리
+	{
+		CloseHandle(pushThread);
+		CloseHandle(popThread);
+	}
+
+	return;
 
 }
 
@@ -116,7 +73,7 @@ void speedCheck() {
 
 		sp.profileBegin("push");
 
-		rb.push(strLen, (const BYTE*)str);
+		rb.push(strLen, str);
 
 		sp.profileEnd("push");
 
@@ -124,7 +81,7 @@ void speedCheck() {
 
 		sp.profileBegin("front");
 
-		rb.front(strLen, (BYTE*)outbuf);
+		rb.front(strLen, outbuf);
 
 		sp.profileEnd("front");
 
@@ -145,6 +102,73 @@ void speedCheck() {
 int main() {
 
 	unitTest();
+
+	return 0;
+}
+
+unsigned __stdcall unitTestPushFunc(void* arg) {
+
+	unsigned int seed = *(unsigned int*)arg;
+	srand(seed);
+
+	const char* strIter = orgStr;
+	unsigned int strLen = strlen(orgStr);
+	unsigned int strLeftLen = strLen;
+
+
+	while (beShutdown == false) {
+
+		unsigned int directFreeSize = rb.getDirectFreeSize();
+
+		if (strLeftLen == 0) {
+			strIter = orgStr;
+			strLeftLen = strLen;
+		}
+
+		unsigned int pushMaxSize = min(directFreeSize, strLeftLen);
+		if (pushMaxSize == 0) {
+			continue;
+		}
+
+		unsigned int pushSize = rand() % pushMaxSize + 1;
+
+		memcpy(rb.getDirectPush(), strIter, pushSize);
+
+		rb.moveRear(pushSize);
+
+		strIter += pushSize;
+		strLeftLen -= pushSize;
+
+	}
+
+	return 0;
+}
+
+unsigned __stdcall unitTestPopFunc(void* arg) {
+
+	unsigned int seed = *(unsigned int*)arg;
+	srand(seed);
+
+	char outBuffer[BUFFER_SIZE];
+
+	while (beShutdown == false) {
+
+ 		ZeroMemory(outBuffer, BUFFER_SIZE);
+
+		unsigned int directUsedSize = rb.getDirectUsedSize();
+		if (directUsedSize == 0) {
+			continue;
+		}
+
+		unsigned int maxPopSize = min(directUsedSize, BUFFER_SIZE - 1);
+		unsigned int popSize = rand() % maxPopSize + 1;
+
+		memcpy(outBuffer, rb.getDirectFront(), popSize);
+		rb.moveFront(popSize);
+
+		printf("%s", outBuffer);
+		
+	}
 
 	return 0;
 }

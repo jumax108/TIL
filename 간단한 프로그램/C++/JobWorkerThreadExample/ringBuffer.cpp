@@ -2,8 +2,13 @@
 #include <Windows.h>
 #include "ringBuffer.h"
 
-#define min(a, b) (a>b?b:a)
-#define max(a, b) (a>b?a:b)
+#ifndef min
+	#define min(a, b) ((a)>(b)?(b):(a))
+#endif
+
+#ifndef max
+	#define max(a, b) ((a)>(b)?(a):(b))
+#endif
 
 CRingBuffer::CRingBuffer(unsigned int capacity) {
 
@@ -27,7 +32,7 @@ CRingBuffer::~CRingBuffer() {
 	free(_buffer);
 }
 
-bool CRingBuffer::push(unsigned int size, const char* buffer) {
+bool CRingBuffer::push(unsigned int size, const void* buffer) {
 
 		
 	unsigned int freeSize = getFreeSize();
@@ -39,14 +44,14 @@ bool CRingBuffer::push(unsigned int size, const char* buffer) {
 
 	do {
 
-		int destBufferIndex = (rearTemp + size);
+		unsigned int destBufferIndex = (rearTemp + size);
 		if (destBufferIndex >= _capacity + 1) {
 			destBufferIndex = _capacity + 1;
 		}
 		int copySize = destBufferIndex - rearTemp;
 		memcpy(&_buffer[rearTemp], buffer, copySize);
 		rearTemp = (rearTemp + copySize) % (_capacity + 1);
-		buffer += copySize;
+		buffer = (char*)buffer + copySize;
 		size -= copySize;
 
 	} while (size > 0);
@@ -69,7 +74,7 @@ bool CRingBuffer::pop(unsigned int size) {
 	return true;
 }
 
-bool CRingBuffer::front(unsigned int size, char* buffer) {
+bool CRingBuffer::front(unsigned int size, void* buffer) {
 
 	unsigned int usedSize = getUsedSize();
 	if (usedSize < size) {
@@ -81,13 +86,13 @@ bool CRingBuffer::front(unsigned int size, char* buffer) {
 
 	do {
 
-		int destBufferIndex = (frontTemp + size);
+		unsigned int destBufferIndex = (frontTemp + size);
 		if (destBufferIndex >= _capacity + 1) {
 			destBufferIndex = _capacity + 1;
 		}
 		copySize = destBufferIndex - frontTemp;
 		memcpy(buffer, &_buffer[frontTemp], copySize);
-		buffer += copySize;
+		buffer = (char*)buffer + copySize;
 		size -= copySize;
 		frontTemp = (frontTemp + copySize) % (_capacity + 1);
 
@@ -99,23 +104,31 @@ bool CRingBuffer::front(unsigned int size, char* buffer) {
 
 unsigned int CRingBuffer::getFreeSize() {
 
-	return  _capacity - getUsedSize();
+	unsigned int front = _front;
+
+	if(front > _rear){
+		
+		return front - _rear;
+
+	}
+
+	return _capacity - _rear + front;
+
 
 }
 
 unsigned int  CRingBuffer::getUsedSize() {
 
 	unsigned int rear = _rear;
-	unsigned int front = _front;
 
-	if (rear >= front) {
+	if (rear >= _front) {
 
-		return rear - front;
+		return rear - _front;
 
 	}
 	else {
 
-		return rear + _capacity + 1 - front;
+		return rear + _capacity + 1 - _front;
 
 	}
 
