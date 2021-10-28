@@ -6,8 +6,8 @@
 #define TEST
 
 
-#define INTERLOCK
-//#define CRITICALSECTION
+//#define INTERLOCK
+#define CRITICALSECTION
 //#define SRW
 
 int data;
@@ -28,8 +28,8 @@ unsigned int __stdcall disconnectFunc(void*);
 #endif
 
 #ifdef TEST
-	int acceptCall;
-	int disconnectCall;
+	int acceptLoop;
+	int disconnectLoop;
 #endif
 
 int main() {
@@ -41,8 +41,8 @@ int main() {
 	constexpr int TARGET_PROC_SEC = 20;
 
 	#ifdef TEST
-		int* updateCall = new int[UPDATE_THREAD_NUM];
-		ZeroMemory(updateCall, sizeof(int) * UPDATE_THREAD_NUM);
+		int* updateLoop = new int[UPDATE_THREAD_NUM];
+		ZeroMemory(updateLoop, sizeof(int) * UPDATE_THREAD_NUM);
 	#endif
 
 	// accept Thread 생성
@@ -72,9 +72,10 @@ int main() {
 		#endif
 
 		HANDLE* updateThreadEnd = updateThread + UPDATE_THREAD_NUM;
+		int* updateLoopIter = updateLoop;
 		for (HANDLE* updateThreadIter = updateThread; updateThreadIter != updateThreadEnd; ++updateThreadIter) {
 			#ifdef TEST
-				*updateThreadIter = (HANDLE)_beginthreadex(nullptr, 0, updateFunc, updateCall++, 0, nullptr);
+				*updateThreadIter = (HANDLE)_beginthreadex(nullptr, 0, updateFunc, updateLoopIter++, 0, nullptr);
 			#else
 				*updateThreadIter = (HANDLE)_beginthreadex(nullptr, 0, updateFunc, nullptr, 0, nullptr);
 			#endif
@@ -120,7 +121,24 @@ int main() {
 		}
 	}
 
-	wprintf(L"%10s: %10s: %4d\n", L"main", L"data", data);
+	// 동기화 객체 정리
+	{
+		#if defined(CRITICALSECTION)
+			DeleteCriticalSection(&dataCriticalSection);
+		#endif
+	}
+
+	#if defined(TEST)
+	{
+		wprintf(L"%10s: %10s: %4d\n", L"main", L"data", data);
+		int loopSum = 0;
+		for (int updateThreadCnt = 0; updateThreadCnt < UPDATE_THREAD_NUM; ++updateThreadCnt) {
+			loopSum += updateLoop[updateThreadCnt];
+		}
+		wprintf(L"%10s: %10s: %4d\n", L"main", L"loopSum", loopSum);
+	}
+	#endif
+
 
 	return 0;
 }
@@ -136,14 +154,14 @@ unsigned int __stdcall acceptFunc(void* argList) {
 		InterlockedIncrement((LONG*)&connectNum);
 
 		#ifdef TEST
-			acceptCall += 1;
+			acceptLoop += 1;
 		#endif
 
 		Sleep(rand() % 901 + 100 - 1);
 	}
 
 	#ifdef TEST
-		wprintf(L"%10s: %10s: %4d\n", L"accept", L"call", acceptCall);
+		wprintf(L"%10s: %10s: %4d\n", L"accept", L"loopCnt", acceptLoop);
 	#endif
 
 	return 0;
@@ -160,17 +178,18 @@ unsigned int __stdcall disconnectFunc(void* argList) {
 		InterlockedDecrement((LONG*)&connectNum);
 
 		#ifdef TEST
-			disconnectCall += 1;
+			disconnectLoop += 1;
 		#endif
 
 		Sleep(rand() % 901 + 100 - 1);
 	}
 
 	#ifdef TEST
-		wprintf(L"%10s: %10s: %4d\n",L"disconnect", L"call", disconnectCall);
+		wprintf(L"%10s: %10s: %4d\n",L"disconnect", L"loopCnt", disconnectLoop);
 	#endif
 
 	return 0;
+
 }
 
 #ifdef INTERLOCK
@@ -202,7 +221,7 @@ unsigned int __stdcall updateInterlockFunc(void* arg) {
 	}
 
 	#ifdef TEST
-		wprintf(L"%10s: %10s: %4d\n",L"update", L"call", *(int*)arg);
+		wprintf(L"%10s: %10s: %4d\n",L"update", L"loopCnt", *(int*)arg);
 	#endif
 
 	return 0;

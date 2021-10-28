@@ -45,9 +45,9 @@ stRoom::USERLIST_TYPE::iterator stRoom::userListEnd() {
 	return _userList.end();
 }
 
-void stRoom::userListInsert(unsigned int id, stUser* user) {
+void stRoom::userListInsert(SOCKET id, stUser* user) {
 
-	_userList.insert(std::pair<unsigned int, stUser*>(id, user));
+	_userList.insert(std::pair<SOCKET, stUser*>(id, user));
 	_userNum += 1;
 }
 
