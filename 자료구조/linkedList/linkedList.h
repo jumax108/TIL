@@ -92,9 +92,11 @@ public:
 		node->child->parent = node->parent;
 		node->parent->child = node->child;
 
+		iterator nextIter = *(++iter);
+
 		free(node);
 
-		return *(++iter);
+		return nextIter;
 	}
 
 	void clear();
@@ -116,23 +118,6 @@ private:
 	_node tail;
 
 };
-
-
-/*
-template<typename T>
-linkedList<T>::iterator linkedList<T>::erase(linkedList<T>::iterator iter) {
-
-	linkedList<T>::_node* node = iter.node;
-	linkedList<T>::_node* child = node->child;
-
-	node->child->parent = node->parent;
-	node->parent->child = node->child;
-
-	free(node);
-
-	return *(++iter);
-}*/
-
 
 template<typename T>
 linkedList<T>::linkedList(){

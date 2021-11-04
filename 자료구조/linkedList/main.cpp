@@ -1,6 +1,6 @@
 ﻿#include <stdio.h>
 #include <malloc.h>
-#include "myLinkedList.h"
+#include "linkedList.h"
 
 int main() {
 
