@@ -34,18 +34,18 @@ public:
 	unsigned int getDirectFreeSize();
 	unsigned int getDirectUsedSize();
 
-	void pushLock() {
-		EnterCriticalSection(&pushCriticalSection);
+	inline void pushLock() {
+		AcquireSRWLockExclusive(&pushSRW);
 	}
-	void pushUnlock() {
-		LeaveCriticalSection(&pushCriticalSection);
+	inline void pushUnlock() {
+		ReleaseSRWLockExclusive(&pushSRW);
 	}
 
-	void popLock() {
-		EnterCriticalSection(&popCriticalSection);
+	inline void popLock() {
+		AcquireSRWLockExclusive(&popSRW);
 	}
-	void popUnlock() {
-		LeaveCriticalSection(&popCriticalSection);
+	inline void popUnlock() {
+		ReleaseSRWLockExclusive(&popSRW);
 	}
 
 	bool moveFront(unsigned int);
@@ -53,8 +53,8 @@ public:
 
 private:
 
-	CRITICAL_SECTION pushCriticalSection;
-	CRITICAL_SECTION popCriticalSection;
+	SRWLOCK pushSRW;
+	SRWLOCK popSRW;
 
 	char* _buffer;
 	unsigned int _capacity;

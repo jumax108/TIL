@@ -1,4 +1,5 @@
 ﻿
+#include <thread>
 #include <Windows.h>
 #include "ringBuffer.h"
 

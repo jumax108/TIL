@@ -68,18 +68,8 @@ list<st_SESSION *>		g_SessionList;
 //
 // Session 이 생성 후, 생성 될때 (Accept 처리 완료시)  st_PLAYER 객체도 함께 생성되어 여기에 등록 된다.
 ////////////////////////////////////////////////////////
-CRITICAL_SECTION		g_Player_cs;
-list<st_PLAYER *>		g_PlayerList;
-
-void LockPlayer()
-{
-	EnterCriticalSection(&g_Player_cs);
-}
-
-void UnlockPlayer()
-{
-	LeaveCriticalSection(&g_Player_cs);
-}
+constexpr int PLAYER_NUM = 1000;
+st_PLAYER* g_PlayerList[PLAYER_NUM];
 
 
 HANDLE	g_hExitThreadEvent;
@@ -101,14 +91,16 @@ void NewSession(DWORD dwSessionID)
 	g_SessionList.push_back(pSession);
 	UnlockSession();
 
+	for(int playerCnt = 0; playerCnt < PLAYER_NUM; ++playerCnt){
+		
+		if(g_PlayerList[playerCnt]->SessionID == -1){
+			g_PlayerList[playerCnt]->SessionID = dwSessionID;
+			memset(g_PlayerList[playerCnt]->Content, 0, sizeof(g_PlayerList[playerCnt]->Content[0]) * 3);
+			break;
+		}
 
-	st_PLAYER *pPlayer = new st_PLAYER;
-	pPlayer->SessionID = dwSessionID;
-	memset(pPlayer->Content, 0, sizeof(pPlayer->Content[0]) * 3);
+	}
 
-	LockPlayer();
-	g_PlayerList.push_back(pPlayer);
-	UnlockPlayer();
 
 }
 
@@ -128,18 +120,16 @@ void DeleteSession(DWORD dwSessionID)
 	}
 	UnlockSession();
 
-	LockPlayer();
-	list<st_PLAYER *>::iterator PlayerIter = g_PlayerList.begin();
-	for ( ; PlayerIter != g_PlayerList.end(); PlayerIter++ )
+	st_PLAYER ** PlayerIter = g_PlayerList;
+	st_PLAYER** playerEnd = g_PlayerList + PLAYER_NUM;
+	for ( ; PlayerIter != playerEnd; PlayerIter++ )
 	{
 		if ( dwSessionID == (*PlayerIter)->SessionID )
 		{
-			delete *PlayerIter;
-			g_PlayerList.erase(PlayerIter);
+			(*PlayerIter)->SessionID = -1;
 			break;
 		}
 	}
-	UnlockPlayer();
 }
 
 
@@ -147,17 +137,20 @@ bool FindSessionList(DWORD dwSessionID)
 {
 	LockSession();
 
+	bool result = false;
+
 	list<st_SESSION *>::iterator SessionIter = g_SessionList.begin();
 	for ( ; SessionIter != g_SessionList.end(); SessionIter++ )
 	{
 		if ( dwSessionID == (*SessionIter)->SessionID )
 		{
-			return true;
+		result = true;
+			break;
 		}
 	}
 	UnlockSession();
 
-	return false;
+	return result;
 }
 
 
@@ -284,6 +277,7 @@ unsigned int WINAPI IOThread(LPVOID lpParam)
 			break;
 
 		case 1:			// Disconnect 추가
+
 			swprintf_s(g_szDebug, 80, L"# IOThread DisconnetPacket Insert [%d] \n", dwSessionID);
 			LockDisconnect();
 			g_DisconnectPacketList.push_back(dwSessionID);
@@ -356,9 +350,9 @@ unsigned int WINAPI UpdateThread(LPVOID lpParam)
 			//----------------------------------------------------------
 			// PlayerList 에 이미 존재하는 SessionID 인지 확인. 있는 경우만 해당 플레이어 찾아서 + 1
 			//----------------------------------------------------------
-			LockPlayer();
-			list<st_PLAYER *>::iterator PlayerIter = g_PlayerList.begin();
-			for ( ; PlayerIter != g_PlayerList.end(); PlayerIter++ )
+			st_PLAYER** PlayerIter = g_PlayerList;
+			st_PLAYER** playerEnd = g_PlayerList + PLAYER_NUM;
+			for ( ; PlayerIter != playerEnd; PlayerIter++ )
 			{
 				pPlayer = *PlayerIter;
 				if ( dwSessionID == pPlayer->SessionID )
@@ -372,7 +366,6 @@ unsigned int WINAPI UpdateThread(LPVOID lpParam)
 					break;
 				}
 			}
-			UnlockPlayer();
 			UnlockAction();
 
 		}
@@ -408,8 +401,12 @@ void Initial()
 	InitializeCriticalSection(&g_Accept_cs);
 	InitializeCriticalSection(&g_Action_cs);
 	InitializeCriticalSection(&g_Disconnect_cs);
-	InitializeCriticalSection(&g_Player_cs);
 	InitializeCriticalSection(&g_Session_cs);
+
+	for(int playerCnt = 0; playerCnt < PLAYER_NUM; ++playerCnt){
+		g_PlayerList[playerCnt] = new st_PLAYER;
+		g_PlayerList[playerCnt]->SessionID = -1;
+	}
 
 }
 
@@ -431,11 +428,11 @@ void Release()
 		g_SessionList.erase(SessionIter++);
 	}
 
-	list<st_PLAYER *>::iterator PlayerIter = g_PlayerList.begin();
-	while ( PlayerIter != g_PlayerList.end() )
+	st_PLAYER** PlayerIter = g_PlayerList;
+	st_PLAYER** playerEnd = g_PlayerList + PLAYER_NUM;
+	while ( PlayerIter != playerEnd)
 	{
 		delete *PlayerIter;
-		g_PlayerList.erase(PlayerIter++);
 	}
 
 	delete[] g_szDebug;
@@ -443,7 +440,6 @@ void Release()
 	DeleteCriticalSection(&g_Accept_cs);
 	DeleteCriticalSection(&g_Action_cs);
 	DeleteCriticalSection(&g_Disconnect_cs);
-	DeleteCriticalSection(&g_Player_cs);
 	DeleteCriticalSection(&g_Session_cs);
 
 
