@@ -51,6 +51,11 @@ public:
 	bool moveFront(unsigned int);
 	bool moveRear(unsigned int);
 
+	char* getBufferStart(){return _buffer;}
+
+	char* getRearPtr(){return &_buffer[_rear];}
+	char* getFrontPtr(){return &_buffer[_front];}
+
 private:
 
 	SRWLOCK pushSRW;

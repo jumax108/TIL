@@ -8,8 +8,8 @@
 
 CRingBuffer::CRingBuffer(unsigned int capacity) {
 
-	InitializeCriticalSection(&pushCriticalSection);
-	InitializeCriticalSection(&popCriticalSection);
+	InitializeSRWLock(&pushSRW);
+	InitializeSRWLock(&popSRW);
 
 	_capacity = capacity;
 	_buffer = (char*)malloc((unsigned __int64)capacity + 1);
@@ -21,9 +21,6 @@ CRingBuffer::CRingBuffer(unsigned int capacity) {
 }
 
 CRingBuffer::~CRingBuffer() {
-
-	DeleteCriticalSection(&pushCriticalSection);
-	DeleteCriticalSection(&popCriticalSection);
 
 	free(_buffer);
 }
