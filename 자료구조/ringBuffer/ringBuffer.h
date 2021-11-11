@@ -1,15 +1,15 @@
 #pragma once
 
+#define push(size, buffer) pushData(size, buffer, __LINE__, __FILEW__)
+
 class CRingBuffer {
-
-
 
 public:
 
 	CRingBuffer(unsigned int capacity);
 	~CRingBuffer();
 
-	bool push(unsigned int size, const char* buffer);
+	bool pushData(unsigned int size, const char* buffer, int line, const wchar_t* sourceFileName);
 	bool pop(unsigned int size);
 	bool front(unsigned int size, char* buffer);
 
@@ -57,6 +57,10 @@ public:
 	char* getFrontPtr(){return &_buffer[_front];}
 
 private:
+	
+	void resize(int size, int line, const wchar_t* sourceFileName);
+
+private:
 
 	SRWLOCK pushSRW;
 	SRWLOCK popSRW;
@@ -65,5 +69,7 @@ private:
 	unsigned int _capacity;
 	unsigned int _rear;
 	unsigned int _front;
+
+	wchar_t fileName[35];
 
 };

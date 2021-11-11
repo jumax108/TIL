@@ -131,7 +131,7 @@ private:
 
 	void killProcess() {
 		int* kill = nullptr;
-		*kill = 1;
+		*kill = 0;
 	}
 
 

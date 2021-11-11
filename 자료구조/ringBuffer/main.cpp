@@ -65,7 +65,7 @@ void unitTest() {
 void speedCheck() {
 
 	const char* str = "123456789";
-	int strLen = strlen(str);
+	unsigned int strLen = (unsigned int)strlen(str);
 
 	const int loopNum = 100000000;
 
@@ -112,7 +112,7 @@ unsigned __stdcall unitTestPushFunc(void* arg) {
 	srand(seed);
 
 	const char* strIter = orgStr;
-	unsigned int strLen = strlen(orgStr);
+	unsigned int strLen = (unsigned int)strlen(orgStr);
 	unsigned int strLeftLen = strLen;
 
 
