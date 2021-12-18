@@ -18,6 +18,7 @@ CRingBuffer::CRingBuffer(unsigned int capacity) {
 	InitializeSRWLock(&popSRW);
 
 	_capacity = capacity;
+	_actualCap = _capacity + 1;
 	_buffer = (char*)malloc((unsigned __int64)capacity + 1);
 	ZeroMemory(_buffer, (unsigned __int64)capacity + 1);
 
@@ -50,12 +51,12 @@ bool CRingBuffer::pushData(unsigned int size, const char* buffer, int line, cons
 	do {
 
 		unsigned int destBufferIndex = (rearTemp + size);
-		if (destBufferIndex >= _capacity + 1) {
-			destBufferIndex = _capacity + 1;
+		if (destBufferIndex >= _actualCap) {
+			destBufferIndex = _actualCap;
 		}
 		unsigned int copySize = destBufferIndex - rearTemp;
 		memcpy(&_buffer[rearTemp], buffer, copySize);
-		rearTemp = (rearTemp + copySize) % (_capacity + 1);
+		rearTemp = (rearTemp + copySize) % (_actualCap);
 		buffer += copySize;
 		size -= copySize;
 
@@ -74,7 +75,7 @@ bool CRingBuffer::pop(unsigned int size) {
 		return false;
 	}
 
-	_front = (_front + size) % (_capacity + 1);
+	_front = (_front + size) % (_actualCap);
 
 	return true;
 }
@@ -91,15 +92,15 @@ bool CRingBuffer::front(unsigned int size, char* buffer) {
 
 	do {
 
-		int destBufferIndex = (frontTemp + size);
-		if (destBufferIndex >= _capacity + 1) {
-			destBufferIndex = _capacity + 1;
+		unsigned int destBufferIndex = (frontTemp + size);
+		if (destBufferIndex >= _actualCap) {
+			destBufferIndex = _actualCap;
 		}
 		copySize = destBufferIndex - frontTemp;
 		memcpy(buffer, &_buffer[frontTemp], copySize);
 		buffer += copySize;
 		size -= copySize;
-		frontTemp = (frontTemp + copySize) % (_capacity + 1);
+		frontTemp = (frontTemp + copySize) % _actualCap;
 
 	} while (size > 0);
 
@@ -109,7 +110,14 @@ bool CRingBuffer::front(unsigned int size, char* buffer) {
 
 unsigned int CRingBuffer::getFreeSize() {
 
-	return  _capacity - getUsedSize();
+	unsigned int front = _front;
+	unsigned int rear = _rear;
+
+	if(rear >= front){
+		return _capacity - rear + front;
+	} else {
+		return front - rear - 1;
+	}
 
 }
 
@@ -125,7 +133,7 @@ unsigned int  CRingBuffer::getUsedSize() {
 	}
 	else {
 
-		return rear + _capacity + 1 - front;
+		return rear + _actualCap - front;
 
 	}
 
@@ -141,13 +149,13 @@ char* CRingBuffer::getDirectFront() {
 
 bool CRingBuffer::moveFront(unsigned int size) {
 
-	_front = (_front + size) % (_capacity + 1);
+	_front = (_front + size) % (_actualCap);
 	return true;
 }
 
 bool CRingBuffer::moveRear(unsigned int size) {
 
-	_rear = (_rear + size) % (_capacity + 1);
+	_rear = (_rear + size) % (_actualCap);
 	return true;
 
 }
@@ -159,7 +167,7 @@ unsigned int CRingBuffer::getDirectFreeSize() {
 	if (front > _rear) {
 		return front - _rear - 1;
 	}
-	return _capacity + 1 - _rear - (front == 0);
+	return _actualCap - _rear - (front == 0);
 }
 
 unsigned int CRingBuffer::getDirectUsedSize() {
@@ -169,7 +177,7 @@ unsigned int CRingBuffer::getDirectUsedSize() {
 	if (_front <= rear) {
 		return rear - _front;
 	}
-	return _capacity + 1 - _front;
+	return _actualCap - _front;
 }
 
 void CRingBuffer::resize(int size, int line, const wchar_t* sourceFileName){
@@ -186,5 +194,6 @@ void CRingBuffer::resize(int size, int line, const wchar_t* sourceFileName){
 	fwprintf_s(logFile, L"Resize, %d -> %d\nfile: %s\nline: %d\n\n", _capacity, size, sourceFileName, line);
 
 	_capacity = size;
+	_actualCap = _capacity + 1;
 
 }

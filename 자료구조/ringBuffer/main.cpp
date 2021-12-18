@@ -67,7 +67,7 @@ void speedCheck() {
 	const char* str = "123456789";
 	unsigned int strLen = (unsigned int)strlen(str);
 
-	const int loopNum = 100000000;
+	const int loopNum = 10000000;
 
 	for (int loopCnt = 0; loopCnt < loopNum; loopCnt++) {
 
@@ -94,7 +94,6 @@ void speedCheck() {
 
 	}
 
-	sp.printToConsole();
 	sp.printToFile();
 
 }
@@ -102,6 +101,7 @@ void speedCheck() {
 int main() {
 
 	unitTest();
+	//speedCheck();
 
 	return 0;
 }
@@ -117,27 +117,35 @@ unsigned __stdcall unitTestPushFunc(void* arg) {
 
 
 	while (beShutdown == false) {
-
-		unsigned int directFreeSize = rb.getDirectFreeSize();
+		
+		//unsigned int directFreeSize = rb.getDirectFreeSize();
+		unsigned int freeSize = rb.getFreeSize();
 
 		if (strLeftLen == 0) {
 			strIter = orgStr;
 			strLeftLen = strLen;
 		}
 
-		unsigned int pushMaxSize = min(directFreeSize, strLeftLen);
+		unsigned int pushMaxSize = min(freeSize, strLeftLen); //min(directFreeSize, strLeftLen);
 		if (pushMaxSize == 0) {
 			continue;
 		}
 
 		unsigned int pushSize = rand() % pushMaxSize + 1;
 
-		memcpy(rb.getDirectPush(), strIter, pushSize);
+		rb.push(pushSize, strIter);
+		//memcpy(rb.getDirectPush(), strIter, pushSize);
 
-		rb.moveRear(pushSize);
+		//rb.moveRear(pushSize);
+
+		if(strLeftLen < pushSize){
+			int k = 9;
+		}
 
 		strIter += pushSize;
 		strLeftLen -= pushSize;
+
+		//wprintf(L"%s %d %d %d\n", strIter, strLeftLen, pushMaxSize, pushSize);
 
 	}
 
@@ -155,16 +163,18 @@ unsigned __stdcall unitTestPopFunc(void* arg) {
 
  		ZeroMemory(outBuffer, BUFFER_SIZE);
 
-		unsigned int directUsedSize = rb.getDirectUsedSize();
-		if (directUsedSize == 0) {
+		unsigned int usedSize = rb.getUsedSize(); //rb.getDirectUsedSize();
+		if (usedSize == 0) {
 			continue;
 		}
 
-		unsigned int maxPopSize = min(directUsedSize, BUFFER_SIZE - 1);
+		unsigned int maxPopSize = min(usedSize, BUFFER_SIZE - 1);
 		unsigned int popSize = rand() % maxPopSize + 1;
 
-		memcpy(outBuffer, rb.getDirectFront(), popSize);
-		rb.moveFront(popSize);
+		rb.front(popSize, outBuffer);
+		rb.pop(popSize);
+		//memcpy(outBuffer, rb.getDirectFront(), popSize);
+		//rb.moveFront(popSize);
 
 		printf("%s", outBuffer);
 		

@@ -66,7 +66,12 @@ private:
 	SRWLOCK popSRW;
 
 	char* _buffer;
+
 	unsigned int _capacity;
+
+	// capacity + 1, 실제로 할당받은 객체 수
+	unsigned int _actualCap;
+
 	unsigned int _rear;
 	unsigned int _front;
 
