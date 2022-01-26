@@ -149,25 +149,25 @@ bool CLockFreeQueue<T>::push(T data, HANDLE threadHandle){
 	unsigned __int64 loopCnt = 0;
 	
 	unsigned __int64 useCnt;
-
+	
+	//InterlockedIncrement64((LONG64*)&_useCnt);
+	_useCnt += 1;
 	do{
 		
-		if(loopCnt > 0){
-			
-			// tail이 null이 아닐 때까지 변경
-			while(tailNextPtr != nullptr){
+		// tail이 null이 아닐 때까지 변경
+		do{
 
-				tail = _tail;
-				tailNode = (stNode*)((unsigned __int64)tail & _pointerMask);
-				tailNextPtr = tailNode->_next;
+			tail = _tail;
+			tailNode = (stNode*)((unsigned __int64)tail & _pointerMask);
+			tailNextPtr = tailNode->_next;
 
-				if(tailNextPtr != nullptr){
-					InterlockedCompareExchange64((LONG64*)&_tail, (LONG64)tailNextPtr, (LONG64)tail);
-				}
-
+			if(tailNextPtr == nullptr){
+				break;
 			}
+						
 
-		}
+		}while(InterlockedCompareExchange64((LONG64*)&_tail, (LONG64)tailNextPtr, (LONG64)tail) != (LONG64)tail);
+
 
 		tail = _tail;
 		head = _head;
@@ -183,8 +183,6 @@ bool CLockFreeQueue<T>::push(T data, HANDLE threadHandle){
 		loopCnt+=1;
 			
 	} while( InterlockedCompareExchange64((LONG64*)&tailNode->_next, (LONG64)newPtr, (LONG64)nullptr ) != (LONG64)nullptr );
-	_useCnt = useCnt + 1;
-	//InterlockedIncrement64((LONG64*)&_useCnt);
 				
 	tailNextPtr = tailNode->_next;
 	tailNextNode = (stNode*)((unsigned __int64)tailNextPtr & _pointerMask);
@@ -285,6 +283,8 @@ bool CLockFreeQueue<T>::pop(T* data, HANDLE threadHandle){
 
 	unsigned __int64 loopCnt = 0;
 	
+	//InterlockedIncrement64((LONG64*)&_useCnt);
+	_useCnt += 1;
 	do{
 		do { 
 			head = _head;
@@ -294,11 +294,17 @@ bool CLockFreeQueue<T>::pop(T* data, HANDLE threadHandle){
 			popPtr = headNode->_next;
 			popNode = (stNode*)((unsigned __int64)popPtr & _pointerMask);
 			tailNode = (stNode*)((unsigned __int64)tail & _pointerMask);
-		
-			if(tailNode != nullptr){
+			
+			do{
+				tail = _tail;
+				tailNode = (stNode*)((unsigned __int64)tail & _pointerMask);
 				tailNextPtr = tailNode->_next;
-				tailNextNode = (stNode*)((unsigned __int64)tailNextPtr & _pointerMask);
-			}
+
+				if(tailNextPtr == nullptr){
+					break;
+				}
+
+			}while(InterlockedCompareExchange64((LONG64*)&_tail, (LONG64)tailNextPtr, (LONG64)tail) != (LONG64)tail);
 
 			unsigned __int64 useCnt = _useCnt;
 
@@ -307,7 +313,7 @@ bool CLockFreeQueue<T>::pop(T* data, HANDLE threadHandle){
 			nextHeadPtr = (void*)((unsigned __int64)popNode | (useCnt << 43));
 
 		} while(popNode == nullptr);
-
+		
 		popNodeData = popNode->_data;
 
 		loopCnt += 1;

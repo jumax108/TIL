@@ -25,8 +25,8 @@ CDump dump;
 
 unsigned int tps = 0;
 
-constexpr int THREAD_NUM = 5;
-constexpr int NODE_EACH_THREAD = 5;
+constexpr int THREAD_NUM = 6;
+constexpr int NODE_EACH_THREAD = 1;
 constexpr int MAX_NODE = THREAD_NUM * NODE_EACH_THREAD;
 
 stNode _numArr[MAX_NODE];
@@ -90,7 +90,7 @@ unsigned __stdcall logicTestFunc(void* arg){
 			if(popResult == false){
 				// error
 				_queueForDebug = queue;
-				queue = nullptr;
+				//queue = nullptr;
 				CDump::crash();
 			}
 		}
@@ -99,7 +99,7 @@ unsigned __stdcall logicTestFunc(void* arg){
 			if(arr[nodeCnt]->data != 0){
 				// error
 				_queueForDebug = queue;
-				queue = nullptr;
+				//queue = nullptr;
 				CDump::crash();
 			}
 		}
@@ -116,7 +116,7 @@ unsigned __stdcall logicTestFunc(void* arg){
 			if(arr[nodeCnt]->data != 1){
 				// error
 				_queueForDebug = queue;
-				queue = nullptr;
+				//queue = nullptr;
 				CDump::crash();
 			}
 		}
@@ -133,7 +133,7 @@ unsigned __stdcall logicTestFunc(void* arg){
 			if(arr[nodeCnt]->data  != 0){
 				// error
 				_queueForDebug = queue;
-				queue = nullptr;
+				//queue = nullptr;
 				CDump::crash();
 			}
 		}
@@ -148,7 +148,7 @@ unsigned __stdcall logicTestFunc(void* arg){
 			if(pushResult == false){
 				// error
 				_queueForDebug = queue;
-				queue = nullptr;
+				//queue = nullptr;
 				CDump::crash();
 			}
 		}
@@ -165,7 +165,7 @@ unsigned __stdcall printTPS(void*){
 	while(1){
 		Sleep(999);
 		if(tps == 0){
-			dump.crash();
+		//	dump.crash();
 		}
 		wprintf(L"TPS: %d\n", tps);
 		InterlockedExchange(&tps, 0);

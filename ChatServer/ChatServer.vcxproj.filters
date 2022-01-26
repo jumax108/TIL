@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{78255142-891c-42ca-a8fb-890968e61994}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\common">
+      <UniqueIdentifier>{392a51df-e85d-4ea4-87e3-5b5b703a8037}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\common\header">
+      <UniqueIdentifier>{b55108cd-3270-43b8-ab67-dad583fdd61e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\common\source">
+      <UniqueIdentifier>{11e8283a-14ff-49e5-a527-b89bb1ba7728}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\netServer">
+      <UniqueIdentifier>{6e2ba65e-e609-49a3-9306-b810b7088f0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\lanServer">
+      <UniqueIdentifier>{48c5b7c9-caaa-4a27-b841-989d7e05133a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="chatServer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="performanceServer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\packetPtr.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\protocolBuffer.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\ObjectFreeListTLS.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\lockFreeStack.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\ObjectFreeList.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\lockFreeQueue.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\performanceData.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\cpuUsage.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\ringBuffer.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\dump.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\SimpleProfiler.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\log.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\stack.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common\stringParser.h">
+      <Filter>lib\common\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NetServer\common.h">
+      <Filter>lib\netServer</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NetServer\netServer.h">
+      <Filter>lib\netServer</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LanServer\common.h">
+      <Filter>lib\lanServer</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LanServer\lanServer.h">
+      <Filter>lib\lanServer</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NetServer\packetPtr_NetServer.h">
+      <Filter>lib\netServer</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LanServer\packetPtr_LanServer.h">
+      <Filter>lib\lanServer</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="chatServer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\packetPtr.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\performanceData.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\protocolBuffer.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\cpuUsage.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\ringBuffer.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\log.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\dump.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\common\stringParser.cpp">
+      <Filter>lib\common\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NetServer\netServer.cpp">
+      <Filter>lib\netServer</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LanServer\lanServer.cpp">
+      <Filter>lib\lanServer</Filter>
+    </ClCompile>
+    <ClCompile Include="performanceServer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
