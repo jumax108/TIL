@@ -1,74 +1,42 @@
 #pragma once
 
 template<typename T>
-class linkedList {
+class CLinkedList {
 public:
 
-	struct _node {
-		T value;
-		_node* parent;
-		_node* child;
+	struct stNode {
 
-		inline _node* operator=(const _node* const node) {
-			value = node->value;
-			parent = node->parent;
-			child = node->child;
-
-			return this;
-		}
-
-		inline bool operator==(const _node& const node) {
-			return value == node.value && parent == node.parent && child == node.child;
-		}
-
-	};
-
-	class iterator {
 	public:
-		iterator() {
-			node = nullptr;
-		}
-
-		iterator(const _node* const node) {
-			this->node = (_node*)node;
-		}
-
-		inline iterator* operator=(const _node* const node) {
-			this->node = (_node*)node;
-
-			return this;
-		}
-
-		inline T& operator*() {
-			return node->value;
-		}
-
-		inline iterator* operator++() {
-			node = node->child;
-			return this;
-		}
-
-
-
-		inline iterator* operator--() {
-			node = node->parent;
-			return this;
-		}
-
-		inline bool operator!=(const _node* const node) {
-			return !(*(this->node) == *node);
-		}
-
-		inline bool operator==(const _node* const node) {
-			return *(this->node) == *node;
-		}
+		inline stNode* operator=(const stNode& const node);
+		inline bool operator==(const stNode& const node);
+		inline bool operator!=(const stNode& const node);
 
 	private:
-		_node *node;
-		friend class linkedList;
+		T _value;
+		stNode* _parent;
+		stNode* _child;
+		friend class CIterator;
 	};
 
-	linkedList();
+	class CIterator {
+	public:
+		CIterator();
+		CIterator(const stNode* const node);
+
+		inline CIterator& operator=(const stNode& node);
+		inline T& operator*();
+
+		inline CIterator& operator++();
+		inline CIterator& operator--();
+
+		inline bool operator!=(const stNode* const node);
+		inline bool operator==(const stNode* const node);
+
+	private:
+		stNode* _node;
+	};
+
+	CLinkedList();
 
 	void push_front(
 		const T const value // 저장할 값
@@ -79,48 +47,35 @@ public:
 
 	void insert(
 		const T const value, // 값을 저장할 데이터
-		_node* parent  // 이 노드의 자식으로 저장됩니다.
+		stNode* parent  // 이 노드의 자식으로 저장됩니다.
 	);
 
-	iterator erase(
-		iterator iter // 지울 노드를 전달합니다.
-	) {
-
-		linkedList<T>::_node* node = iter.node;
-		linkedList<T>::_node* child = node->child;
-
-		node->child->parent = node->parent;
-		node->parent->child = node->child;
-
-		iterator nextIter = *(++iter);
-
-		free(node);
-
-		return nextIter;
-	}
+	CIterator& erase(
+		CIterator& iter // 지울 노드를 전달합니다.
+	);
 
 	void clear();
 
-	inline _node* begin() {
+	inline stNode* begin() {
 		return head.child;
 	}
 
-	inline _node* end() {
+	inline stNode* end() {
 		return &tail;
 	}
 
-	~linkedList();
+	~CLinkedList();
 
 
 
 private:
-	_node head;
-	_node tail;
+	stNode head;
+	stNode tail;
 
 };
 
 template<typename T>
-linkedList<T>::linkedList(){
+CLinkedList<T>::CLinkedList(){
 	
 	head.parent = nullptr;
 	head.child = &tail;
@@ -130,14 +85,14 @@ linkedList<T>::linkedList(){
 }
 
 template<typename T>
-linkedList<T>::~linkedList() {
+CLinkedList<T>::~CLinkedList() {
 	clear();
 }
 
 template<typename T>
-void linkedList<T>::insert(T value, linkedList<T>::_node* parent) {
+void CLinkedList<T>::insert(T value, CLinkedList<T>::stNode* parent) {
 
-	_node* node = (linkedList<T>::_node*)malloc(sizeof(linkedList<T>::_node));
+	stNode* node = (CLinkedList<T>::stNode*)malloc(sizeof(CLinkedList<T>::stNode));
 
 	node->value = value;
 	node->parent = parent;
@@ -149,8 +104,8 @@ void linkedList<T>::insert(T value, linkedList<T>::_node* parent) {
 }
 
 template<typename T>
-void linkedList<T>::push_front(const T const value) {
-	_node* node = (linkedList<T>::_node*)malloc(sizeof(linkedList<T>::_node));
+void CLinkedList<T>::push_front(const T const value) {
+	stNode* node = (CLinkedList<T>::stNode*)malloc(sizeof(CLinkedList<T>::stNode));
 
 	node->value = value;
 
@@ -162,8 +117,8 @@ void linkedList<T>::push_front(const T const value) {
 }
 
 template<typename T>
-void linkedList<T>::push_back(const T const value) {
-	_node* node = (linkedList<T>::_node*)malloc(sizeof(linkedList<T>::_node));
+void CLinkedList<T>::push_back(const T const value) {
+	stNode* node = (CLinkedList<T>::stNode*)malloc(sizeof(CLinkedList<T>::stNode));
 
 	node->value = value;
 	node->parent = tail.parent;
@@ -174,8 +129,92 @@ void linkedList<T>::push_back(const T const value) {
 }
 
 template<typename T>
-void linkedList<T>::clear() {
-	for (linkedList<T>::iterator iter = begin(); iter != end(); ) {
+void CLinkedList<T>::clear() {
+	for (CLinkedList<T>::CIterator iter = begin(); iter != end(); ) {
 		iter = erase(iter);
 	}
+}
+
+template<typename T>
+CLinkedList<T>::CIterator& CLinkedList<T>::erase(
+	CIterator& iter // 지울 노드를 전달합니다.
+) {
+
+	CLinkedList<T>::stNode* node = iter.node;
+	CLinkedList<T>::stNode* child = node->child;
+
+	node->child->parent = node->parent;
+	node->parent->child = node->child;
+
+	CIterator nextIter = ++iter;
+
+	free(node);
+
+	return nextIter;
+}
+
+template <typename T>
+CLinkedList<T>::stNode* CLinkedList<T>::stNode::operator=(const stNode& const node){
+	_value	= node._value	;
+	_parent = node._parent	;
+	_child	= node._child	;
+
+	return this;
+}
+
+template <typename T>
+bool CLinkedList<T>::stNode::operator==(const stNode& const node) {
+	return	_value  == node._value  &&
+			_parent == node._parent &&
+			_child  == node._child;
+}
+
+template <typename T>
+bool CLinkedList<T>::stNode::operator!=(const stNode& const node) {
+	return	_value	!= node._value	||
+			_parent != node._parent ||
+			_child	!= node._child;
+}
+
+template <typename T>
+CLinkedList<T>::CIterator::CIterator() {
+	_node = nullptr;
+}
+
+template <typename T>
+CLinkedList<T>::CIterator::CIterator(const stNode* node) {
+	_node = (stNode*)node;
+}
+
+template <typename T>
+CLinkedList<T>::CIterator& CLinkedList<T>::CIterator::operator=(const stNode& node) {
+	_node->operator=(node);
+	return this;
+}
+
+template <typename T>
+T& CLinkedList<T>::CIterator::operator*() {
+	return _node->value;
+}
+
+template <typename T>
+CLinkedList<T>::CIterator& CLinkedList<T>::CIterator::operator++() {
+	_node = _node->child;
+	return *this;
+}
+
+template <typename T>
+CLinkedList<T>::CIterator& CLinkedList<T>::CIterator::operator--() {
+	_node = _node->parent;
+	return *this;
+}
+
+template <typename T>
+bool CLinkedList<T>::CIterator::operator!=(const stNode* const node) {
+	return *(this->_node) != *node;
+}
+
+template <typename T>
+bool CLinkedList<T>::CIterator::operator==(const stNode* const node) {
+	return *(this->_node) == *node;
 }
